@@ -1,4 +1,6 @@
 ---
-- name: Change gnome keybindings
-  ansible.builtin.shell: dconf load /org/gnome/desktop/wm/keybindings/ < gnome/files/wm-keybindings.dconf.bak
+- name: Change Gnome keybindings
+  ansible.builtin.shell: dconf load /org/gnome/desktop/wm/keybindings/ < gnome/files/wm-keybindings-dconf
 
+- name: Change keyboard remaps
+  ansible.builtin.shell: dconf load /org/gnome/desktop/input-sources/ < gnome/files/input-sources-dconf

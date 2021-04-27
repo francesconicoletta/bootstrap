@@ -1,0 +1,3 @@
+[/]
+sources=[('xkb', 'us+altgr-intl')]
+xkb-options=['terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']
