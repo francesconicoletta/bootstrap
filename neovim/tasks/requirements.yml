@@ -3,7 +3,7 @@
   become: yes
   shell: curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
   args:
-    - warn: false
+    warn: false
   when: ansible_facts['os_family'] == "Debian"
 
 - name: Install requirements (apt)
