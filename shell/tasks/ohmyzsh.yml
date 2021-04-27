@@ -1,4 +1,9 @@
 ---
+- name: Remove pre-existing .oh-my-zsh
+  ansible.builtin.file:
+    path: ~/.oh-my-zsh
+    state: absent
+
 - name: Check for oh-my-zsh installation
   stat:
     path: "{{ lookup('env', 'HOME') }}/.oh-my-zsh"
