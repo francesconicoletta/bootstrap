@@ -4,9 +4,11 @@
   apt:
     name:
       - gnome-tweaks
+  when: "'gnome-shell' in ansible_facts.packages"
 
 - name: Install clipboard indicator
   ansible.builtin.git:
     repo: https://github.com/Tudmotu/gnome-shell-extension-clipboard-indicator.git
     dest: ~/.local/share/gnome-shell/extensions/clipboard-indicator@tudmotu.com
+  when: "'gnome-shell' in ansible_facts.packages"
 

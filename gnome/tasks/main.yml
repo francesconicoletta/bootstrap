@@ -1,9 +1,5 @@
 ---
-- name: Gather the package facts
-  ansible.builtin.package_facts:
-    manager: auto
+- import_tasks: keybindings.yml
 
-- name: Check if gnome is installed
-  - import_tasks: keybindings.yml
-  - import_tasks: programs.yml
-  when: "'gnome-shell' in ansible_facts.packages"
+- import_tasks: programs.yml
+
