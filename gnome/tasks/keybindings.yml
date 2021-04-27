@@ -1,12 +1,6 @@
 ---
-- name: Gather the package facts
-  ansible.builtin.package_facts:
-    manager: auto
-
 - name: Change Gnome keybindings
-  ansible.builtin.shell: dconf load /org/gnome/desktop/wm/keybindings/ < gnome/files/wm-keybindings-dconf
-  when: "'gnome-shell' in ansible_facts.packages"
+  raw: dconf load /org/gnome/desktop/wm/keybindings/ < gnome/files/wm-keybindings-dconf
 
 - name: Change keyboard remaps
-  ansible.builtin.shell: dconf load /org/gnome/desktop/input-sources/ < gnome/files/input-sources-dconf
-  when: "'gnome-shell' in ansible_facts.packages"
+  raw: dconf load /org/gnome/desktop/input-sources/ < gnome/files/input-sources-dconf
