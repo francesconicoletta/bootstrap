@@ -1,0 +1,18 @@
+---
+- name: Install nodejs on Debian based distros (apt)
+  become: yes
+  shell: curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install requirements (apt)
+  become: yes
+  apt:
+    name: 
+      - neovim
+      - python3-pip
+      - nodejs
+      - clangd
+      - curl
+    update_cache: yes
+  when: ansible_facts['os_family'] == "Debian"
+

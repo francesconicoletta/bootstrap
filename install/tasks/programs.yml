@@ -1,0 +1,47 @@
+---
+- name: Update repositories cache
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Install CLI programs (apt)
+  become: yes
+  apt:
+      name:
+        - zsh
+        - aria2
+        - ranger
+        - htop
+        - python3-pip
+        - newsboat
+        - r-base
+        - fzf
+        - ripgrep
+        - stow
+
+- name: Install CLI programs (pip)
+  pip:
+    name: youtube-dl
+
+- name: Install GUI programs (apt)
+  become: yes
+  apt:
+      name:
+        - mpv
+        - firefox
+        - gnome-boxes
+        - timeshift
+        - transmission
+        - spotify
+        - deja-dup
+        - ryhthmbox
+
+- name: Install GUI programs (snap)
+  become: yes
+  snap:
+      name:
+        - telegram-desktop
+        - multipass
+        - thunderbird
+  when: ansible_facts['distribution'] == 'Ubuntu'
+

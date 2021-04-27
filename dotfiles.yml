@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  vars_files: 
+    - variables/variables.yml
+  roles:
+    - install
+    - shell
+    - link
+    - neovim

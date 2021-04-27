@@ -1,0 +1,7 @@
+[/]
+close=['<Shift><Super>q']
+maximize=['<Super>k']
+minimize=['<Shift><Super>h']
+switch-to-workspace-left=@as []
+switch-to-workspace-right=@as []
+unmaximize=['<Super>j']
