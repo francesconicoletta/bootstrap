@@ -7,3 +7,10 @@
 - name: Install oh-my-zsh
   raw: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"'
   when: not oh_my_zsh_stat.stat.exists
+
+- name: Install zsh-autosuggestions
+  raw: 'git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions'
+
+- name: Install zsh-syntax-highlighting
+  raw: 'git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting'
+
