@@ -35,6 +35,7 @@
         - spotify-client
         - deja-dup
         - ryhthmbox
+        - thunderbird
 
 - name: Install GUI programs (snap)
   become: yes
@@ -42,6 +43,5 @@
       name:
         - telegram-desktop
         - multipass
-        - thunderbird
   when: ansible_facts['distribution'] == 'Ubuntu'
 
