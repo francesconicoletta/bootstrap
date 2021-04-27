@@ -34,7 +34,7 @@
         - transmission
         - spotify-client
         - deja-dup
-        - ryhthmbox
+        - rhythmbox
         - thunderbird
 
 - name: Install GUI programs (snap)
