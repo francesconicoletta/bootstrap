@@ -3,7 +3,3 @@
   become: yes
   command: chsh -s /bin/zsh {{ lookup('env', 'USER') }}
 
-- name: Remove .zshrc
-  ansible.builtin.file:
-    path: ~/.zshrc
-    state: absent
