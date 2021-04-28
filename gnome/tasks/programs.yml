@@ -4,6 +4,7 @@
   apt:
     name:
       - gnome-tweaks
+      - gnome-shell-pomodoro
 
 - name: Install clipboard indicator
   ansible.builtin.git:

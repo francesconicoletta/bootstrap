@@ -29,13 +29,13 @@
       name:
         - mpv
         - firefox
-        - gnome-boxes
         - timeshift
         - transmission
         - spotify-client
         - deja-dup
         - rhythmbox
         - thunderbird
+        - virt-manager
 
 - name: Install GUI programs (snap)
   become: yes
