@@ -1,0 +1,24 @@
+---
+- name: Enable libvirtd
+  ansible.builtin.systemd:
+    name: libvirtd
+    state: started
+    enabled: yes
+
+- name: Enable ufw
+  ansible.builtin.systemd:
+    name: libvirtd
+    state: started
+    enabled: yes
+
+- name: Enforce default apparmor profiles
+  become: yes
+  command: sudo aa-enforce /etc/apparmor.d/*
+
+- name: Enable AppArmor profiles caching
+  become: yes
+  ansible.builtin.lineinfile:
+      dest: /etc/apparmor/parser.conf
+      regexp: '^#\s*write-cache.*$'
+      line: write-cache
+

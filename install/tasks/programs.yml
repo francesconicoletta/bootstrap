@@ -35,7 +35,6 @@
         - deja-dup
         - rhythmbox
         - thunderbird
-        - virt-manager
 
 - name: Install GUI programs (snap)
   become: yes
