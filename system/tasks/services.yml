@@ -1,11 +1,13 @@
 ---
 - name: Enable libvirtd
+  become: yes
   ansible.builtin.systemd:
     name: libvirtd
     state: started
     enabled: yes
 
 - name: Enable ufw
+  become: yes
   ansible.builtin.systemd:
     name: libvirtd
     state: started
