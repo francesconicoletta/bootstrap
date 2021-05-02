@@ -18,6 +18,9 @@
         - fzf
         - ripgrep
         - stow
+        - tmux
+        - tmuxinator
+        - tmux-plugin-manager
 
 - name: Install CLI programs (pip)
   pip:
