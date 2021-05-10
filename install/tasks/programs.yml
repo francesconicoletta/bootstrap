@@ -38,6 +38,7 @@
         - deja-dup
         - rhythmbox
         - thunderbird
+        - shotwell
 
 - name: Install GUI programs (snap)
   become: yes

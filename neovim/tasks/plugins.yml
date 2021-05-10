@@ -6,5 +6,5 @@
   shell: nvim --headless +PlugInstall +qa
 
 - name: Install coc plugins
-  shell: nvim +'CocInstall -sync coc-explorer coc-clang coc-pyright coc-tsserver coc-json coc-java|qa'
+  shell: nvim +'CocUpdateSync|qa'
 
