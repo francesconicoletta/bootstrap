@@ -21,6 +21,7 @@
         - tmux
         - tmuxinator
         - tmux-plugin-manager
+        - tree
 
 - name: Install CLI programs (pip)
   pip:
