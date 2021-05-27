@@ -22,6 +22,7 @@
         - tmuxinator
         - tmux-plugin-manager
         - tree
+        - mlocate
 
 - name: Install CLI programs (pip)
   pip:
