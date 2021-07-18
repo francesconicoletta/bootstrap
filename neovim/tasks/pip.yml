@@ -1,4 +1,0 @@
----
-- name: Install pynvim
-  pip:
-    name: pynvim

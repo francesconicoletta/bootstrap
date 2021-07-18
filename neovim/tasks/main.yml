@@ -1,6 +1,0 @@
----
-- import_tasks: requirements.yml
-
-- import_tasks: pip.yml
-
-- import_tasks: plugins.yml

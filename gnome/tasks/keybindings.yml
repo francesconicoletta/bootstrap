@@ -1,6 +1,0 @@
----
-- name: Change Gnome keybindings
-  raw: dconf load /org/gnome/desktop/wm/keybindings/ < gnome/files/wm-keybindings-dconf
-
-- name: Change keyboard remaps
-  raw: dconf load /org/gnome/desktop/input-sources/ < gnome/files/input-sources-dconf

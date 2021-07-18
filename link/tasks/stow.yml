@@ -1,4 +1,0 @@
----
-- name: Symlink dotfiles with stow
-  make:
-    chdir: ~/.dotfiles

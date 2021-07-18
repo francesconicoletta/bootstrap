@@ -1,4 +1,0 @@
----
-- import_tasks: shell.yml
-
-- import_tasks: ohmyzsh.yml

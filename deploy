@@ -1,0 +1,290 @@
+#!/bin/sh
+
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$NAME
+    VER=$VERSION_ID
+elif type lsb_release >/dev/null 2>&1; then
+    OS=$(lsb_release -si)
+    VER=$(lsb_release -sr)
+elif [ -f /etc/lsb-release ]; then
+    . /etc/lsb-release
+    OS=$DISTRIB_ID
+    VER=$DISTRIB_RELEASE
+elif [ -f /etc/debian_version ]; then
+    OS=Debian
+    VER=$(cat /etc/debian_version)
+else
+    OS=$(uname -s)
+    VER=$(uname -r)
+fi
+
+echo "Distro: $OS"
+echo "Version: $VER"
+
+dir=$(cd -- "$(dirname -- "$0")" && pwd)
+cd "$dir" || exit
+script
+if ! [ -f "$HOME/.ssh/id_ed25519" ]; then
+	printf "Ssh key not present."
+	exit 1
+fi
+
+stty -echo
+printf "Password: "
+read -r PASSWORD
+stty echo
+printf "\n"
+
+if "$OS" = "Ubuntu"; then
+	if snap list | grep "store"; then
+		if ! echo "$PASSWORD" | sudo -S snap remove snap-store; then
+			printf "Snap remove failed."
+			exit 1
+		fi
+	fi
+
+	# TODO: add ripgrep-all
+	# TODO: add toolbox
+
+	if ! echo "$PASSWORD" | sudo -S apt update; then
+		printf "Update failed."
+		exit 1
+	fi
+
+	if ! echo "$PASSWORD" | sudo -S apt install -y \
+		git \
+		curl \
+		zsh \
+		aria2 \
+		ranger \
+		xclip \
+		htop \
+		python3-pip \
+		newsboat \
+		r-base \
+		fzf \
+		ripgrep \
+		stow \
+		tmux \
+		tmuxinator \
+		tmux-plugin-manager \
+		tree \
+		mlocate \
+		mpv \
+		firefox \
+		timeshift \
+		transmission \
+		deja-dup \
+		rhythmbox \
+		thunderbird \
+		shotwell \
+		virt-manager \
+		ufw \
+		gufw \
+		flatpak \
+		tlp \
+		syncthing \
+		; then
+		printf "Install failed."
+		exit 1
+	fi
+
+	if ! pip3 install youtube-dl pynvim --user; then
+		printf "Pip install failed."
+		exit 1
+	fi
+
+	# Add Podman repo
+	if [ "$VER" = "focal" ]; then
+		echo "$PASSWORD" | sudo -S sh -c 'echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list'
+
+		curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/Release.key" --output Release.key
+		echo "$PASSWORD" | sudo -S apt-key add -
+		rm Release.key
+	fi
+
+	# Add Spotify repo
+	curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg --output pubkey_0D811D58.gpg
+	echo "$PASSWORD" | sudo -S apt-key add -
+	rm pubkey_0D811D58.gpg
+
+	echo "$PASSWORD" | sudo -S sh -c 'echo "deb http://repository.spotify.com stable non-free" > /etc/apt/sources.list.d/spotify.list'
+
+	if ! echo "$PASSWORD" | sudo -S apt update; then
+		printf "Update failed."
+		exit 1
+	fi
+
+	if ! echo "$PASSWORD" | sudo -S apt install -y \
+		podman \
+		spotify-client \
+		; then
+		printf "Install failed."
+		exit 1
+	fi
+
+	if ! echo "$PASSWORD" | sudo -S apt upgrade; then
+		printf "Upgrade failed."
+		exit 1
+	fi
+
+	flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+	flatpak install -y flathub org.telegram.desktop
+
+	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
+	echo "$PASSWORD" | sudo -S systemctl enable --now ufw
+	echo "$PASSWORD" | sudo -S usermod -aG livirt "$USER"
+	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
+
+elif "$OS" = "Arch"; then
+	if ! echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm \
+		git \
+		curl \
+		zsh \
+		aria2 \
+		ranger \
+		xclip \
+		htop \
+		python-pip \
+		newsboat \
+		r \
+		fzf \
+		ripgrep \
+		stow \
+		tmux \
+		tree \
+		mlocate \
+		mpv \
+		firefox \
+		transmission \
+		deja-dup \
+		rhythmbox \
+		thunderbird \
+		shotwell \
+		virt-manager \
+		podman \
+		toolbox \
+		telegram-desktop \
+		base-devel \
+		wl-clipboard \
+		firewalld \
+		syncthing \
+		; then
+		printf "Install failed."
+		exit 1
+	fi
+
+	if ! pip3 install youtube-dl pynvim --user; then
+		printf "Pip install failed."
+		exit 1
+	fi
+
+	git clone https://aur.archlinux.org/paru.git
+	cd paru || exit
+	#TODO: makepkg needs sudo
+	makepkg -si
+	rm -rf paru
+
+	echo "$PASSWORD" | sudo -S paru -S --noconfirm \
+		spotify \
+		google-chrome \
+		visual-studio-code-bin
+
+	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
+	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
+	echo "$PASSWORD" | sudo -S usermod -aG livirt "$USER"
+	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
+
+elif "$OS" = "Fedora"; then
+	# TODO: add ripgrep-all
+
+	# Enable RPM Fusion
+	echo "$PASSWORD" | sudo -S dnf install -y \
+		"https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
+	echo "$PASSWORD" | sudo -S dnf install -y \
+		"https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+
+	if ! echo "$PASSWORD" | sudo -S dnf install -y \
+		git \
+		curl \
+		zsh \
+		aria2 \
+		ranger \
+		xclip \
+		htop \
+		python3-pip \
+		newsboat \
+		R \
+		fzf \
+		ripgrep \
+		stow \
+		tmux \
+		tree \
+		mlocate \
+		mpv \
+		firefox \
+		timeshift \
+		transmission \
+		deja-dup \
+		rhythmbox \
+		thunderbird \
+		shotwell \
+		virt-manager \
+		podman \
+		toolbox \
+		telegram-desktop \
+		flatpak \
+		syncthing \
+		; then
+		printf "Install failed."
+		exit 1
+	fi
+
+	if ! pip3 install youtube-dl pynvim --user; then
+		printf "Pip install failed."
+		exit 1
+	fi
+
+	flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+	flatpak install -y flathub com.spotify.Client
+	flatpak install -y flathub org.telegram.desktop
+
+	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
+	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
+	echo "$PASSWORD" | sudo -S usermod -aG livirt "$USER"
+	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
+
+else
+	echo "Distro not supported."
+fi
+
+git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+nvim --headless +PackerCompile +PackerInstall +qa
+
+# shell
+chsh -s "$(command -v zsh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+
+if ! git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"; then
+	printf "Error in git clone."
+	exit 0
+fi
+
+rm "$HOME/.zsh*"
+
+cd "$HOME/.dotfiles" || exit
+
+if ! make stow; then
+	printf "Error in stow."
+	exit 0
+fi
+
+dconf load /org/gnome/desktop/input-sources/ < echo "[/] \ sources=[('xkb', 'us')] \ xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']"
+dconf load /org/gnome/desktop/pheripherals/touchpad < echo "[/] \ click-method='fingers' \ tap-to-click=false \ two-finger-scrolling-enabled=true"
+dconf load /org/gnome/desktop/wm/keybindings < echo "[/] \ close=['<Shift><Super>q']"
+dconf load /org/gnome/desktop/wm/keybindings < echo "[/] \ resize-with-right-button=true"
+
+printf "End."
