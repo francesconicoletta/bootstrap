@@ -25,10 +25,17 @@ echo "Version: $VER"
 dir=$(cd -- "$(dirname -- "$0")" && pwd)
 cd "$dir" || exit
 
-if ! [ -f "$HOME/.ssh/id_ed25519" ]; then
-	printf "Ssh key not present."
-	exit 1
-fi
+echo "[/]
+sources=[('xkb', 'us')]
+xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']" | dconf load /org/gnome/desktop/input-sources/
+echo "[/]
+click-method='fingers'
+tap-to-click=false
+two-finger-scrolling-enabled=true" | dconf load /org/gnome/desktop/pheripherals/touchpad/
+echo "[/]
+close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
+echo "[/]
+resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
 
 stty -echo
 printf "Password: "
@@ -39,9 +46,6 @@ printf "\n"
 if [ "$OS" = "Ubuntu" ]; then
 
 	echo "$PASSWORD" | sudo -S snap remove snap-store
-
-	# TODO: add ripgrep-all
-	# TODO: add toolbox
 
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
 
@@ -159,8 +163,8 @@ elif [ "$OS" = "Arch" ]; then
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
 elif [ "$OS" = "Fedora" ]; then
-	# TODO: add ripgrep-all
 
+	echo "$PASSWORD" | dnf copr enable -y agriffis/neovim-nightly
 	# Enable RPM Fusion
 	echo "$PASSWORD" | sudo -S dnf install -y \
 		"https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
@@ -199,6 +203,7 @@ elif [ "$OS" = "Fedora" ]; then
 		flatpak \
 		syncthing \
 		neovim \
+		python3-neovim \
 		wl-clipboard
 
 	pip3 install youtube-dl pynvim --user
@@ -218,31 +223,27 @@ fi
 
 git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
 
-nvim --headless +PackerCompile +PackerInstall +qa
-
-chsh -s "$(command -v zsh)"
+echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
+export CHSH=no
+export RUNZSH=no
+export KEEP_ZSHRC=yes
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
 
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
 
 git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
 
-rm "$HOME/.zsh*"
-
 cd "$HOME/.dotfiles" || exit
+
+rm "$HOME/.zshrc"
+rm "$HOME/.zshenv"
 
 make stow
 
-echo "[/]
-sources=[('xkb', 'us')]
-xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']" | dconf load /org/gnome/desktop/input-sources/
-echo "[/]
-click-method='fingers'
-tap-to-click=false
-two-finger-scrolling-enabled=true" | dconf load /org/gnome/desktop/pheripherals/touchpad/
-echo "[/]
-close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
-echo "[/]
-resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
+git config --global user.email "francesconico86@gmail.com"
+git config --global user.name "Francesco Nicoletta Puzzillo"
+
+# TODO: fix packer
+nvim --headless +PackerCompile +PackerInstall +qa
