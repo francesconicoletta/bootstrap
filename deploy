@@ -46,21 +46,14 @@ if [ "$OS" = "Ubuntu" ]; then
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
 
 	# Add Podman repo
-	echo "$PASSWORD" | sudo -S sh -c 'echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list'
-	curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/Release.key" --output Release.key
-		echo "$PASSWORD" | sudo -S apt-key add Release.key
-		rm Release.key
+	echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+	curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
 
 	# Add Spotify repo
-	curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg --output pubkey_0D811D58.gpg
-	echo "$PASSWORD" | sudo -S apt-key add pubkey_0D811D58.gpg
-	rm pubkey_0D811D58.gpg
-	echo "$PASSWORD" | sudo -S sh -c 'echo "deb http://repository.spotify.com stable non-free" > /etc/apt/sources.list.d/spotify.list'
+	curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add -
+	echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
 
-	if ! echo "$PASSWORD" | sudo -S apt update; then
-		printf "Update failed."
-		exit 1
-	fi
+	echo "$PASSWORD" | sudo -S apt update
 
 	echo "$PASSWORD" | sudo -S apt install -y \
 		git \
