@@ -24,7 +24,7 @@ echo "Version: $VER"
 
 dir=$(cd -- "$(dirname -- "$0")" && pwd)
 cd "$dir" || exit
-script
+
 if ! [ -f "$HOME/.ssh/id_ed25519" ]; then
 	printf "Ssh key not present."
 	exit 1
@@ -37,7 +37,7 @@ stty echo
 printf "\n"
 
 if "$OS" = "Ubuntu"; then
-	if snap list | grep "store"; then
+	if snap list | grep "store"; 
 		if ! echo "$PASSWORD" | sudo -S snap remove snap-store; then
 			printf "Snap remove failed."
 			exit 1
@@ -46,6 +46,8 @@ if "$OS" = "Ubuntu"; then
 
 	# TODO: add ripgrep-all
 	# TODO: add toolbox
+
+	sudo add-apt-repository -y ppa:neovim-ppa/unstable
 
 	if ! echo "$PASSWORD" | sudo -S apt update; then
 		printf "Update failed."
@@ -180,7 +182,10 @@ elif "$OS" = "Arch"; then
 		exit 1
 	fi
 
-	git clone https://aur.archlinux.org/paru.git
+	if [ ! -d "paru" ]; then
+		git clone https://aur.archlinux.org/paru.git
+	fi
+
 	cd paru || exit
 	#TODO: makepkg needs sudo
 	makepkg -si
@@ -259,18 +264,25 @@ else
 	echo "Distro not supported."
 fi
 
-git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+if [ ! -d "~/.local/share/nvim/site/pack/packer/start/packer.nvim" ]; then
+	git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+fi
 nvim --headless +PackerCompile +PackerInstall +qa
 
 # shell
 chsh -s "$(command -v zsh)"
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
 
-if ! git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"; then
-	printf "Error in git clone."
-	exit 0
+if [ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"" ]; then
+	git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+fi
+
+if [ ! -d "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ]; then
+	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+fi
+
+if [ ! -d "$HOME/.dotfiles" ]; then
+	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
 fi
 
 rm "$HOME/.zsh*"
