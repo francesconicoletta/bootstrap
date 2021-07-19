@@ -22,6 +22,13 @@ fi
 echo "Distro: $OS"
 echo "Version: $VER"
 
+if ! [ -f "$HOME/.ssh/id_ed25519" ]; then
+	printf "Ssh key not present.\n"
+	git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+else
+	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+fi
+
 dir=$(cd -- "$(dirname -- "$0")" && pwd)
 cd "$dir" || exit
 
@@ -138,6 +145,7 @@ elif [ "$OS" = "Arch" ]; then
 		base-devel \
 		wl-clipboard \
 		firewalld \
+		tlp \
 		syncthing \
 		neovim
 
@@ -179,6 +187,7 @@ elif [ "$OS" = "Fedora" ]; then
 		ranger \
 		xclip \
 		htop \
+		util-linux-user \
 		python3-pip \
 		newsboat \
 		R \
@@ -199,11 +208,10 @@ elif [ "$OS" = "Fedora" ]; then
 		virt-manager \
 		podman \
 		toolbox \
-		telegram-desktop \
 		flatpak \
 		syncthing \
+		tlp \
 		neovim \
-		python3-neovim \
 		wl-clipboard
 
 	pip3 install youtube-dl pynvim --user
@@ -233,12 +241,10 @@ git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/
 
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
 
-git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
-
-cd "$HOME/.dotfiles" || exit
-
 rm "$HOME/.zshrc"
 rm "$HOME/.zshenv"
+
+cd "$HOME/.dotfiles" || exit
 
 make stow
 
