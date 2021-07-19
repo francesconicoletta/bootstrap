@@ -22,16 +22,6 @@ fi
 echo "Distro: $OS"
 echo "Version: $VER"
 
-if ! [ -f "$HOME/.ssh/id_ed25519" ]; then
-	printf "Ssh key not present.\n"
-	git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
-else
-	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
-fi
-
-dir=$(cd -- "$(dirname -- "$0")" && pwd)
-cd "$dir" || exit
-
 echo "[/]
 sources=[('xkb', 'us')]
 xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']" | dconf load /org/gnome/desktop/input-sources/
@@ -43,6 +33,18 @@ echo "[/]
 close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
 echo "[/]
 resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
+echo "[/]
+terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
+
+if [ -f "$HOME/.ssh/id_ed25519" ]; then
+	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+else
+	printf "Ssh key not present.\n"
+	git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+fi
+
+dir=$(cd -- "$(dirname -- "$0")" && pwd)
+cd "$dir" || exit
 
 stty -echo
 printf "Password: "
@@ -133,7 +135,7 @@ elif [ "$OS" = "Arch" ]; then
 		mlocate \
 		mpv \
 		firefox \
-		transmission \
+		transmission-gtk \
 		deja-dup \
 		rhythmbox \
 		thunderbird \
