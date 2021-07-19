@@ -36,25 +36,33 @@ read -r PASSWORD
 stty echo
 printf "\n"
 
-if "$OS" = "Ubuntu"; then
-	if snap list | grep "store"; 
-		if ! echo "$PASSWORD" | sudo -S snap remove snap-store; then
-			printf "Snap remove failed."
-			exit 1
-		fi
-	fi
+if [ "$OS" = "Ubuntu" ]; then
+
+	echo "$PASSWORD" | sudo -S snap remove snap-store
 
 	# TODO: add ripgrep-all
 	# TODO: add toolbox
 
-	sudo add-apt-repository -y ppa:neovim-ppa/unstable
+	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
+
+	# Add Podman repo
+	echo "$PASSWORD" | sudo -S sh -c 'echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list'
+	curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/Release.key" --output Release.key
+		echo "$PASSWORD" | sudo -S apt-key add Release.key
+		rm Release.key
+
+	# Add Spotify repo
+	curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg --output pubkey_0D811D58.gpg
+	echo "$PASSWORD" | sudo -S apt-key add pubkey_0D811D58.gpg
+	rm pubkey_0D811D58.gpg
+	echo "$PASSWORD" | sudo -S sh -c 'echo "deb http://repository.spotify.com stable non-free" > /etc/apt/sources.list.d/spotify.list'
 
 	if ! echo "$PASSWORD" | sudo -S apt update; then
 		printf "Update failed."
 		exit 1
 	fi
 
-	if ! echo "$PASSWORD" | sudo -S apt install -y \
+	echo "$PASSWORD" | sudo -S apt install -y \
 		git \
 		curl \
 		zsh \
@@ -87,60 +95,21 @@ if "$OS" = "Ubuntu"; then
 		flatpak \
 		tlp \
 		syncthing \
-		; then
-		printf "Install failed."
-		exit 1
-	fi
-
-	if ! pip3 install youtube-dl pynvim --user; then
-		printf "Pip install failed."
-		exit 1
-	fi
-
-	# Add Podman repo
-	if [ "$VER" = "focal" ]; then
-		echo "$PASSWORD" | sudo -S sh -c 'echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list'
-
-		curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/Release.key" --output Release.key
-		echo "$PASSWORD" | sudo -S apt-key add -
-		rm Release.key
-	fi
-
-	# Add Spotify repo
-	curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg --output pubkey_0D811D58.gpg
-	echo "$PASSWORD" | sudo -S apt-key add -
-	rm pubkey_0D811D58.gpg
-
-	echo "$PASSWORD" | sudo -S sh -c 'echo "deb http://repository.spotify.com stable non-free" > /etc/apt/sources.list.d/spotify.list'
-
-	if ! echo "$PASSWORD" | sudo -S apt update; then
-		printf "Update failed."
-		exit 1
-	fi
-
-	if ! echo "$PASSWORD" | sudo -S apt install -y \
 		podman \
-		spotify-client \
-		; then
-		printf "Install failed."
-		exit 1
-	fi
+		spotify-client
 
-	if ! echo "$PASSWORD" | sudo -S apt upgrade; then
-		printf "Upgrade failed."
-		exit 1
-	fi
+	pip3 install youtube-dl pynvim --user
 
 	flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	flatpak install -y flathub org.telegram.desktop
 
 	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 	echo "$PASSWORD" | sudo -S systemctl enable --now ufw
-	echo "$PASSWORD" | sudo -S usermod -aG livirt "$USER"
+	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
-elif "$OS" = "Arch"; then
-	if ! echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm \
+elif [ "$OS" = "Arch" ]; then
+	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm \
 		git \
 		curl \
 		zsh \
@@ -171,16 +140,9 @@ elif "$OS" = "Arch"; then
 		base-devel \
 		wl-clipboard \
 		firewalld \
-		syncthing \
-		; then
-		printf "Install failed."
-		exit 1
-	fi
+		syncthing
 
-	if ! pip3 install youtube-dl pynvim --user; then
-		printf "Pip install failed."
-		exit 1
-	fi
+	pip3 install youtube-dl pynvim --user
 
 	if [ ! -d "paru" ]; then
 		git clone https://aur.archlinux.org/paru.git
@@ -198,10 +160,10 @@ elif "$OS" = "Arch"; then
 
 	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
-	echo "$PASSWORD" | sudo -S usermod -aG livirt "$USER"
+	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
-elif "$OS" = "Fedora"; then
+elif [ "$OS" = "Fedora" ]; then
 	# TODO: add ripgrep-all
 
 	# Enable RPM Fusion
@@ -210,7 +172,7 @@ elif "$OS" = "Fedora"; then
 	echo "$PASSWORD" | sudo -S dnf install -y \
 		"https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 
-	if ! echo "$PASSWORD" | sudo -S dnf install -y \
+	echo "$PASSWORD" | sudo -S dnf install -y \
 		git \
 		curl \
 		zsh \
@@ -240,16 +202,9 @@ elif "$OS" = "Fedora"; then
 		toolbox \
 		telegram-desktop \
 		flatpak \
-		syncthing \
-		; then
-		printf "Install failed."
-		exit 1
-	fi
+		syncthing
 
-	if ! pip3 install youtube-dl pynvim --user; then
-		printf "Pip install failed."
-		exit 1
-	fi
+	pip3 install youtube-dl pynvim --user
 
 	flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	flatpak install -y flathub com.spotify.Client
@@ -257,7 +212,7 @@ elif "$OS" = "Fedora"; then
 
 	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
-	echo "$PASSWORD" | sudo -S usermod -aG livirt "$USER"
+	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
 else
