@@ -46,7 +46,8 @@ if [ "$OS" = "Ubuntu" ]; then
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
 
 	# Add Podman repo
-	echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VER}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+	. /etc/os-release
+	echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 	curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
 
 	# Add Spotify repo
@@ -89,11 +90,12 @@ if [ "$OS" = "Ubuntu" ]; then
 		tlp \
 		syncthing \
 		podman \
-		spotify-client
+		spotify-client \
+		neovim
 
 	pip3 install youtube-dl pynvim --user
 
-	flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	flatpak install -y flathub org.telegram.desktop
 
 	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
@@ -108,7 +110,6 @@ elif [ "$OS" = "Arch" ]; then
 		zsh \
 		aria2 \
 		ranger \
-		xclip \
 		htop \
 		python-pip \
 		newsboat \
@@ -133,7 +134,8 @@ elif [ "$OS" = "Arch" ]; then
 		base-devel \
 		wl-clipboard \
 		firewalld \
-		syncthing
+		syncthing \
+		neovim
 
 	pip3 install youtube-dl pynvim --user
 
@@ -195,11 +197,13 @@ elif [ "$OS" = "Fedora" ]; then
 		toolbox \
 		telegram-desktop \
 		flatpak \
-		syncthing
+		syncthing \
+		neovim \
+		wl-clipboard
 
 	pip3 install youtube-dl pynvim --user
 
-	flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	flatpak install -y flathub com.spotify.Client
 	flatpak install -y flathub org.telegram.desktop
 
@@ -209,42 +213,36 @@ elif [ "$OS" = "Fedora" ]; then
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
 else
-	echo "Distro not supported."
+	printf "Distro not supported.\n"
 fi
 
-if [ ! -d "~/.local/share/nvim/site/pack/packer/start/packer.nvim" ]; then
-	git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
-fi
+git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+
 nvim --headless +PackerCompile +PackerInstall +qa
 
-# shell
 chsh -s "$(command -v zsh)"
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-if [ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"" ]; then
-	git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-fi
+git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
 
-if [ ! -d "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ]; then
-	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-fi
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
 
-if [ ! -d "$HOME/.dotfiles" ]; then
-	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
-fi
+git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
 
 rm "$HOME/.zsh*"
 
 cd "$HOME/.dotfiles" || exit
 
-if ! make stow; then
-	printf "Error in stow."
-	exit 0
-fi
+make stow
 
-dconf load /org/gnome/desktop/input-sources/ < echo "[/] \ sources=[('xkb', 'us')] \ xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']"
-dconf load /org/gnome/desktop/pheripherals/touchpad < echo "[/] \ click-method='fingers' \ tap-to-click=false \ two-finger-scrolling-enabled=true"
-dconf load /org/gnome/desktop/wm/keybindings < echo "[/] \ close=['<Shift><Super>q']"
-dconf load /org/gnome/desktop/wm/keybindings < echo "[/] \ resize-with-right-button=true"
-
-printf "End."
+echo "[/]
+sources=[('xkb', 'us')]
+xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']" | dconf load /org/gnome/desktop/input-sources/
+echo "[/]
+click-method='fingers'
+tap-to-click=false
+two-finger-scrolling-enabled=true" | dconf load /org/gnome/desktop/pheripherals/touchpad/
+echo "[/]
+close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
+echo "[/]
+resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
