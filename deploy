@@ -11,16 +11,16 @@ elif [ -f /etc/lsb-release ]; then
     . /etc/lsb-release
     OS=$DISTRIB_ID
     VER=$DISTRIB_RELEASE
-elif [ -f /etc/debian_version ]; then
-    OS=Debian
-    VER=$(cat /etc/debian_version)
+elif [ -f /usr/lib/os-release ]; then
+    . /usr/lib/os-release
+    OS=$NAME
+    VER=$VERSION_ID
 else
     OS=$(uname -s)
     VER=$(uname -r)
 fi
 
 echo "Distro: $OS"
-echo "Version: $VER"
 
 echo "[/]
 sources=[('xkb', 'us')]
@@ -53,9 +53,7 @@ stty echo
 printf "\n"
 
 if [ "$OS" = "Ubuntu" ]; then
-
 	echo "$PASSWORD" | sudo -S snap remove snap-store
-
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
 
 	# Add Podman repo
@@ -68,7 +66,6 @@ if [ "$OS" = "Ubuntu" ]; then
 	echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
 
 	echo "$PASSWORD" | sudo -S apt update
-
 	echo "$PASSWORD" | sudo -S apt install -y \
 		git \
 		curl \
@@ -116,7 +113,8 @@ if [ "$OS" = "Ubuntu" ]; then
 	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
-elif [ "$OS" = "Arch" ]; then
+elif [ "$OS" = "Arch Linux" ]; then
+	# TODO: pacman.conf
 	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm \
 		git \
 		curl \
@@ -153,10 +151,7 @@ elif [ "$OS" = "Arch" ]; then
 
 	pip3 install youtube-dl pynvim --user
 
-	if [ ! -d "paru" ]; then
-		git clone https://aur.archlinux.org/paru.git
-	fi
-
+	git clone https://aur.archlinux.org/paru.git
 	cd paru || exit
 	#TODO: makepkg needs sudo
 	makepkg -si
@@ -173,7 +168,6 @@ elif [ "$OS" = "Arch" ]; then
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
 elif [ "$OS" = "Fedora" ]; then
-
 	echo "$PASSWORD" | dnf copr enable -y agriffis/neovim-nightly
 	# Enable RPM Fusion
 	echo "$PASSWORD" | sudo -S dnf install -y \
@@ -226,32 +220,28 @@ elif [ "$OS" = "Fedora" ]; then
 	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
 	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
-
 else
 	printf "Distro not supported.\n"
 fi
 
-git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+echo "$PASSWORD" | sudo -S echo "SUBSYSTEM==\"usb\", ACTION==\"add\", ENV{ID_MODEL}==\"iPhone\", RUN+=\"/usr/bin/env sh -c 'echo Fast > /sys/class/power_supply/apple_mfi_fastcharge/charge_type'\"" > /etc/udev/rules.d/99-ios-fastcharge.rules.j2
 
 echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
 export CHSH=no
 export RUNZSH=no
 export KEEP_ZSHRC=yes
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
 git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
 
 rm "$HOME/.zshrc"
 rm "$HOME/.zshenv"
-
 cd "$HOME/.dotfiles" || exit
-
 make stow
 
 git config --global user.email "francesconico86@gmail.com"
 git config --global user.name "Francesco Nicoletta Puzzillo"
 
+git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
 # TODO: fix packer
 nvim --headless +PackerCompile +PackerInstall +qa
