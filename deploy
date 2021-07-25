@@ -34,8 +34,6 @@ close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
 echo "[/]
 resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
 echo "[/]
-terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
-echo "[/]
 night-light-enabled=true
 night-light-temperature=uint32 3981" | dconf load /org/gnome/settings-daemon/plugins/color/
 echo "[/]
@@ -73,6 +71,10 @@ stty echo
 printf "\n"
 
 if [ "$OS" = "Ubuntu" ]; then
+	# Gnome < 40
+	echo "[/]
+	terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
+
 	echo "$PASSWORD" | sudo -S snap remove snap-store
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
 
@@ -138,7 +140,13 @@ if [ "$OS" = "Ubuntu" ]; then
 
 elif [ "$OS" = "Arch Linux" ]; then
 	# TODO: pacman.conf
-	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm \
+	# Gnome 40
+	echo "[/]
+	binding='<Super>Return'
+	command='gnome-terminal'
+	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/
+
+	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm --needed\
 		git \
 		curl \
 		zsh \
@@ -193,6 +201,12 @@ elif [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
 elif [ "$OS" = "Fedora" ]; then
+	# Gnome 40
+	echo "[/]
+	binding='<Super>Return'
+	command='gnome-terminal'
+	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/
+
 	echo "$PASSWORD" | dnf copr enable -y agriffis/neovim-nightly
 	# Enable RPM Fusion
 	echo "$PASSWORD" | sudo -S dnf install -y \
