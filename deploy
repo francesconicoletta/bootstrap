@@ -35,6 +35,26 @@ echo "[/]
 resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
 echo "[/]
 terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
+echo "[/]
+night-light-enabled=true
+night-light-temperature=uint32 3981" | dconf load /org/gnome/settings-daemon/plugins/color/
+echo "[/]
+center-new-windows=true" | dconf load /org/gnome/mutter/
+echo "[/]
+default-zoom-level='small'" | dconf load /org/gnome/nautilus/list-view/
+echo "[/]
+default-folder-viewer='list-view'
+search-filter-time-type='last_modified'
+search-view='list-view'" | dconf load /org/gnome/nautilus/preferences/
+echo "[/]
+clock-show-date=true
+clock-show-seconds=true
+clock-show-weekday=true
+enable-hot-corners=true
+gtk-im-module='gtk-im-context-simple'
+show-battery-percentage=true
+text-scaling-factor=1.0" | dconf load /org/gnome/desktop/interface/
+
 
 if [ -f "$HOME/.ssh/id_ed25519" ]; then
 	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
@@ -101,6 +121,7 @@ if [ "$OS" = "Ubuntu" ]; then
 		syncthing \
 		podman \
 		spotify-client \
+		ubuntu-restricted-extras \
 		neovim
 
 	pip3 install youtube-dl pynvim --user
@@ -112,6 +133,8 @@ if [ "$OS" = "Ubuntu" ]; then
 	echo "$PASSWORD" | sudo -S systemctl enable --now ufw
 	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
+
+	echo "$PASSWORD" | sudo -S snap install multipass
 
 elif [ "$OS" = "Arch Linux" ]; then
 	# TODO: pacman.conf
@@ -147,6 +170,7 @@ elif [ "$OS" = "Arch Linux" ]; then
 		firewalld \
 		tlp \
 		syncthing \
+		util-linux \
 		neovim
 
 	pip3 install youtube-dl pynvim --user
@@ -164,6 +188,7 @@ elif [ "$OS" = "Arch Linux" ]; then
 
 	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
+	echo "$PASSWORD" | sudo -S systemctl enable --now fstrim.timer
 	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
@@ -224,9 +249,8 @@ else
 	printf "Distro not supported.\n"
 fi
 
-echo "$PASSWORD" | sudo -S echo "SUBSYSTEM==\"usb\", ACTION==\"add\", ENV{ID_MODEL}==\"iPhone\", RUN+=\"/usr/bin/env sh -c 'echo Fast > /sys/class/power_supply/apple_mfi_fastcharge/charge_type'\"" > /etc/udev/rules.d/99-ios-fastcharge.rules.j2
-
 echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
+echo "SUBSYSTEM==\"usb\", ACTION==\"add\", ENV{ID_MODEL}==\"iPhone\", RUN+=\"/usr/bin/env sh -c 'echo Fast > /sys/class/power_supply/apple_mfi_fastcharge/charge_type'\"" | sudo tee /etc/udev/rules.d/99-ios-fastcharge.rules.j2
 export CHSH=no
 export RUNZSH=no
 export KEEP_ZSHRC=yes
