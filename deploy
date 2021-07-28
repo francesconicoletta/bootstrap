@@ -115,6 +115,7 @@ if [ "$OS" = "Ubuntu" ]; then
 		rhythmbox \
 		thunderbird \
 		shotwell \
+		gnome-tweaks \
 		virt-manager \
 		ufw \
 		gufw \
@@ -133,6 +134,7 @@ if [ "$OS" = "Ubuntu" ]; then
 
 	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 	echo "$PASSWORD" | sudo -S systemctl enable --now ufw
+	echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
 	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
@@ -142,9 +144,12 @@ elif [ "$OS" = "Arch Linux" ]; then
 	# TODO: pacman.conf
 	# Gnome 40
 	echo "[/]
+	custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
+
+	[custom-keybindings/custom0]
 	binding='<Super>Return'
 	command='gnome-terminal'
-	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/
+	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
 
 	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm --needed\
 		git \
@@ -169,6 +174,7 @@ elif [ "$OS" = "Arch Linux" ]; then
 		rhythmbox \
 		thunderbird \
 		shotwell \
+		gnome-tweaks \
 		virt-manager \
 		podman \
 		toolbox \
@@ -197,15 +203,19 @@ elif [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
 	echo "$PASSWORD" | sudo -S systemctl enable --now fstrim.timer
+	echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
 	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
 elif [ "$OS" = "Fedora" ]; then
 	# Gnome 40
 	echo "[/]
+	custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
+
+	[custom-keybindings/custom0]
 	binding='<Super>Return'
 	command='gnome-terminal'
-	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/
+	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
 
 	echo "$PASSWORD" | dnf copr enable -y agriffis/neovim-nightly
 	# Enable RPM Fusion
@@ -240,6 +250,7 @@ elif [ "$OS" = "Fedora" ]; then
 		rhythmbox \
 		thunderbird \
 		shotwell \
+		gnome-tweaks \
 		virt-manager \
 		podman \
 		toolbox \
@@ -247,7 +258,15 @@ elif [ "$OS" = "Fedora" ]; then
 		syncthing \
 		tlp \
 		neovim \
-		wl-clipboard
+		wl-clipboard \
+		firewall-config \
+		vagrant \
+		gstreamer1-plugins-{bad-\*,good-\*,base} \
+		gstreamer1-plugin-openh264 \
+		gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel \
+		lame\* --exclude=lame-devel
+	
+	echo "$PASSWORD" | sudo -S dnf group upgrade -y --with-optional Multimedia
 
 	pip3 install youtube-dl pynvim --user
 
@@ -257,6 +276,7 @@ elif [ "$OS" = "Fedora" ]; then
 
 	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
+	echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
 	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 else
