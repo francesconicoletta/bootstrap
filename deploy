@@ -53,12 +53,17 @@ gtk-im-module='gtk-im-context-simple'
 show-battery-percentage=true
 text-scaling-factor=1.0" | dconf load /org/gnome/desktop/interface/
 
-
-if [ -f "$HOME/.ssh/id_ed25519" ]; then
-	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+if [ "$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)" -lt 40 ]; then
+	echo "[/]
+	terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
 else
-	printf "Ssh key not present.\n"
-	git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+	echo "[/]
+	custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
+
+	[custom-keybindings/custom0]
+	binding='<Super>Return'
+	command='gnome-terminal'
+	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
 fi
 
 dir=$(cd -- "$(dirname -- "$0")" && pwd)
@@ -71,26 +76,21 @@ stty echo
 printf "\n"
 
 if [ "$OS" = "Ubuntu" ]; then
-	# Gnome < 40
-	echo "[/]
-	terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
-
 	echo "$PASSWORD" | sudo -S snap remove snap-store
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
+	echo "$PASSWORD" | sudo -S apt update
+	echo "$PASSWORD" | sudo -S apt install -y curl
 
-	# Add Podman repo
-	. /etc/os-release
-	echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
-	curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
-
-	# Add Spotify repo
-	curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add -
-	echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+	if [ "$(echo "$VER" | cut -d'.' -f1)" -lt 21 ]; then
+		# Add Podman repo
+		. /etc/os-release
+		echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+		curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
+	fi
 
 	echo "$PASSWORD" | sudo -S apt update
-	echo "$PASSWORD" | sudo -S apt install -y \
+	echo "$PASSWORD" | sudo -S DEBIAN_FRONTEND=noninteractive apt install -y \
 		git \
-		curl \
 		zsh \
 		aria2 \
 		ranger \
@@ -117,41 +117,18 @@ if [ "$OS" = "Ubuntu" ]; then
 		shotwell \
 		gnome-tweaks \
 		virt-manager \
-		ufw \
-		gufw \
+		firewalld \
+		firewall-config \
 		flatpak \
 		tlp \
 		syncthing \
 		podman \
-		spotify-client \
 		ubuntu-restricted-extras \
 		neovim
 
-	pip3 install youtube-dl pynvim --user
-
-	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-	flatpak install -y flathub org.telegram.desktop
-
-	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
-	echo "$PASSWORD" | sudo -S systemctl enable --now ufw
-	echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
-	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
-	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
-
-	echo "$PASSWORD" | sudo -S snap install multipass
-
 elif [ "$OS" = "Arch Linux" ]; then
 	# TODO: pacman.conf
-	# Gnome 40
-	echo "[/]
-	custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
-
-	[custom-keybindings/custom0]
-	binding='<Super>Return'
-	command='gnome-terminal'
-	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
-
-	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm --needed\
+	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm --needed \
 		git \
 		curl \
 		zsh \
@@ -184,10 +161,9 @@ elif [ "$OS" = "Arch Linux" ]; then
 		firewalld \
 		tlp \
 		syncthing \
+		chromium \
 		util-linux \
 		neovim
-
-	pip3 install youtube-dl pynvim --user
 
 	git clone https://aur.archlinux.org/paru.git
 	cd paru || exit
@@ -196,29 +172,9 @@ elif [ "$OS" = "Arch Linux" ]; then
 	rm -rf paru
 
 	echo "$PASSWORD" | sudo -S paru -S --noconfirm \
-		spotify \
-		google-chrome \
-		visual-studio-code-bin
-
-	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
-	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
-	echo "$PASSWORD" | sudo -S systemctl enable --now fstrim.timer
-	echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
-	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
-	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
+		spotify
 
 elif [ "$OS" = "Fedora" ]; then
-	# Gnome 40
-	echo "[/]
-	custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
-
-	[custom-keybindings/custom0]
-	binding='<Super>Return'
-	command='gnome-terminal'
-	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
-
-	echo "$PASSWORD" | dnf copr enable -y agriffis/neovim-nightly
-	# Enable RPM Fusion
 	echo "$PASSWORD" | sudo -S dnf install -y \
 		"https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
 	echo "$PASSWORD" | sudo -S dnf install -y \
@@ -256,46 +212,77 @@ elif [ "$OS" = "Fedora" ]; then
 		toolbox \
 		flatpak \
 		syncthing \
+		chromium \
 		tlp \
 		neovim \
 		wl-clipboard \
 		firewall-config \
-		vagrant \
-		gstreamer1-plugins-{bad-\*,good-\*,base} \
+		unrar \
+		gstreamer1-plugins-bad-free \
+		gstreamer1-plugins-bad-free-extras \
+		gstreamer1-plugins-good \
+		gstreamer1-plugins-good-extras \
+		gstreamer1-plugins-good-gtk \
+		gstreamer1-plugins-good-qt \
+		gstreamer1-plugins-base \
 		gstreamer1-plugin-openh264 \
-		gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel \
-		lame\* --exclude=lame-devel
-	
-	echo "$PASSWORD" | sudo -S dnf group upgrade -y --with-optional Multimedia
+		gstreamer1-libav \
+		lame
+else
+	printf "\nDistro not supported.\n"
+fi
 
-	pip3 install youtube-dl pynvim --user
+echo "$PASSWORD" | sudo -S systemctl enable --now tlp
+echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
+echo "$PASSWORD" | sudo -S systemctl enable --now fstrim.timer
+echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
+echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
+echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 
+pip3 install youtube-dl pynvim --user
+
+if ! [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	flatpak install -y flathub com.spotify.Client
 	flatpak install -y flathub org.telegram.desktop
-
-	echo "$PASSWORD" | sudo -S systemctl enable --now tlp
-	echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
-	echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
-	echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
-	echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
-else
-	printf "Distro not supported.\n"
 fi
 
 echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
 echo "SUBSYSTEM==\"usb\", ACTION==\"add\", ENV{ID_MODEL}==\"iPhone\", RUN+=\"/usr/bin/env sh -c 'echo Fast > /sys/class/power_supply/apple_mfi_fastcharge/charge_type'\"" | sudo tee /etc/udev/rules.d/99-ios-fastcharge.rules.j2
 export CHSH=no
 export RUNZSH=no
-export KEEP_ZSHRC=yes
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+
+if [ -f "$HOME/.ssh/id_ed25519" ]; then
+	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+else
+	printf "\nssh key not present.\n"
+	git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+fi
 
 rm "$HOME/.zshrc"
 rm "$HOME/.zshenv"
 cd "$HOME/.dotfiles" || exit
 make stow
+
+# FZF
+grep -v "source /usr/share/doc/fzf/examples/key-bindings.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
+grep -v "source /usr/share/doc/fzf/examples/completion.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
+grep -v "source /usr/share/fzf/shell/key-bindings.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
+grep -v "source /usr/share/fzf/key-bindings.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
+grep -v "source /usr/share/fzf/completion.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
+
+if [ "$OS" = "Ubuntu" ]; then
+	echo "source /usr/share/doc/fzf/examples/key-bindings.zsh" | tee -a "$HOME/.zshrc"
+	echo "source /usr/share/doc/fzf/examples/completion.zsh" | tee -a "$HOME/.zshrc"
+elif [ "$OS" = "Fedora" ]; then
+	echo "source /usr/share/fzf/shell/key-bindings.zsh" | tee -a "$HOME/.zshrc"
+elif [ "$OS" = "Arch Linux" ]; then
+	echo "source /usr/share/fzf/key-bindings.zsh" | tee -a "$HOME/.zshrc"
+	echo "source /usr/share/fzf/completion.zsh" | tee -a "$HOME/.zshrc"
+fi
 
 git config --global user.email "francesconico86@gmail.com"
 git config --global user.name "Francesco Nicoletta Puzzillo"
