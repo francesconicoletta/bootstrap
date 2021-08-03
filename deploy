@@ -127,7 +127,10 @@ if [ "$OS" = "Ubuntu" ]; then
 		neovim
 
 elif [ "$OS" = "Arch Linux" ]; then
-	# TODO: pacman.conf
+	echo "$PASSWORD" | sudo -S sed -i '/VerbosePkgLists/s/^#//g' /etc/pacman.conf
+	echo "$PASSWORD" | sudo -S sed -i '/Color/s/^#//g' /etc/pacman.conf
+	echo "$PASSWORD" | sudo -S sed -i '/ParallelDownloads/c\ParallelDownloads = 5' /etc/pacman.conf
+
 	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm --needed \
 		git \
 		curl \
@@ -234,7 +237,7 @@ fi
 
 echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
-echo "$PASSWORD" | sudo -S systemctl enable --now fstrim.timer
+echo "$PASSWORD" | sudo -S systemctl enable fstrim.timer
 echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
 echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
@@ -287,6 +290,4 @@ fi
 git config --global user.email "francesconico86@gmail.com"
 git config --global user.name "Francesco Nicoletta Puzzillo"
 
-git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
-# TODO: fix packer
-nvim --headless +PackerCompile +PackerInstall +qa
+nvim
