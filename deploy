@@ -32,6 +32,7 @@ two-finger-scrolling-enabled=true" | dconf load /org/gnome/desktop/pheripherals/
 echo "[/]
 close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
 echo "[/]
+button-layout='appmenu:minimize,maximize,close'
 resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
 echo "[/]
 night-light-enabled=true
@@ -39,11 +40,14 @@ night-light-temperature=uint32 3981" | dconf load /org/gnome/settings-daemon/plu
 echo "[/]
 center-new-windows=true" | dconf load /org/gnome/mutter/
 echo "[/]
-default-zoom-level='small'" | dconf load /org/gnome/nautilus/list-view/
+default-zoom-level='small'
+use-tree-view=true" | dconf load /org/gnome/nautilus/list-view/
 echo "[/]
 default-folder-viewer='list-view'
 search-filter-time-type='last_modified'
-search-view='list-view'" | dconf load /org/gnome/nautilus/preferences/
+search-view='list-view'
+show-create-link=true
+show-delete-permanently=true" | dconf load /org/gnome/nautilus/preferences/
 echo "[/]
 clock-show-date=true
 clock-show-seconds=true
@@ -52,6 +56,12 @@ enable-hot-corners=true
 gtk-im-module='gtk-im-context-simple'
 show-battery-percentage=true
 text-scaling-factor=1.0" | dconf load /org/gnome/desktop/interface/
+echo "[/]
+show-extensions-notice=false" | dconf load /org/gnome/tweaks/
+echo "[/]
+sleep-inactive-ac-timeout=3600
+sleep-inactive-ac-type='nothing'" | dconf load /org/gnome/settings-daemon/plugins/power
+
 
 if [ "$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)" -lt 40 ]; then
 	echo "[/]
@@ -79,16 +89,26 @@ if [ "$OS" = "Ubuntu" ]; then
 	echo "$PASSWORD" | sudo -S snap remove snap-store
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
 	echo "$PASSWORD" | sudo -S apt update
-	echo "$PASSWORD" | sudo -S apt install -y curl
+	echo "$PASSWORD" | sudo -S apt install -y curl wget
 
 	if [ "$(echo "$VER" | cut -d'.' -f1)" -lt 21 ]; then
 		# Add Podman repo
 		. /etc/os-release
 		echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
 		curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
+		echo "$PASSWORD" | sudo -S apt install -y tlp
+		echo "$PASSWORD" | sudo -S systemctl enable --now tlp
+	else
+		echo "$PASSWORD" | sudo -S apt install -y power-profiles-daemon
 	fi
 
+	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+	echo "$PASSWORD" | sudo -S install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
+	echo "$PASSWORD" | sudo -S sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+	rm -f packages.microsoft.gpg
+
 	echo "$PASSWORD" | sudo -S apt update
+	echo "$PASSWORD" | sudo -S apt upgrade -y
 	echo "$PASSWORD" | sudo -S DEBIAN_FRONTEND=noninteractive apt install -y \
 		git \
 		zsh \
@@ -120,11 +140,11 @@ if [ "$OS" = "Ubuntu" ]; then
 		firewalld \
 		firewall-config \
 		flatpak \
-		tlp \
 		syncthing \
 		podman \
 		ubuntu-restricted-extras \
-		neovim
+		neovim \
+		code
 
 elif [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S sed -i '/VerbosePkgLists/s/^#//g' /etc/pacman.conf
@@ -162,9 +182,9 @@ elif [ "$OS" = "Arch Linux" ]; then
 		base-devel \
 		wl-clipboard \
 		firewalld \
-		tlp \
 		syncthing \
 		chromium \
+		discord \
 		sof-firmware \ # required for ThinkPad T14 audio
 		util-linux \
 		neovim
@@ -176,7 +196,9 @@ elif [ "$OS" = "Arch Linux" ]; then
 	rm -rf paru
 
 	echo "$PASSWORD" | sudo -S paru -S --noconfirm \
-		spotify
+		spotify \
+		power-profiles-daemon \
+		visual-studio-code-bin
 
 elif [ "$OS" = "Fedora" ]; then
 	echo "$PASSWORD" | sudo -S dnf install -y \
@@ -184,6 +206,10 @@ elif [ "$OS" = "Fedora" ]; then
 	echo "$PASSWORD" | sudo -S dnf install -y \
 		"https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 
+	sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+	sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+
+	echo "$PASSWORD" | sudo -S dnf update -y
 	echo "$PASSWORD" | sudo -S dnf install -y \
 		git \
 		curl \
@@ -217,10 +243,11 @@ elif [ "$OS" = "Fedora" ]; then
 		flatpak \
 		syncthing \
 		chromium \
-		tlp \
 		neovim \
 		wl-clipboard \
 		firewall-config \
+		power-profiles-daemon \
+		code \
 		unrar \
 		gstreamer1-plugins-bad-free \
 		gstreamer1-plugins-bad-free-extras \
@@ -236,7 +263,6 @@ else
 	printf "\nDistro not supported.\n"
 fi
 
-echo "$PASSWORD" | sudo -S systemctl enable --now tlp
 echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
 echo "$PASSWORD" | sudo -S systemctl enable fstrim.timer
 echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
@@ -250,6 +276,7 @@ if ! [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	flatpak install -y flathub com.spotify.Client
 	flatpak install -y flathub org.telegram.desktop
+	flatpak install -y flatpak install flathub com.discordapp.Discord
 fi
 
 echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
@@ -258,6 +285,9 @@ export RUNZSH=no
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+
+mkdir -p "$HOME/.local/share/fonts"
+aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/SourceCodePro/Regular/complete/Sauce%20Code%20Pro%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
 
 if [ -f "$HOME/.ssh/id_ed25519" ]; then
 	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
