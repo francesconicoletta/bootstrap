@@ -206,8 +206,8 @@ elif [ "$OS" = "Fedora" ]; then
 	echo "$PASSWORD" | sudo -S dnf install -y \
 		"https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 
-	sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-	sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+	echo "$PASSWORD" | sudo -S rpm --import https://packages.microsoft.com/keys/microsoft.asc
+	echo "$PASSWORD" | sudo -S sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
 
 	echo "$PASSWORD" | sudo -S dnf update -y
 	echo "$PASSWORD" | sudo -S dnf install -y \
@@ -246,8 +246,12 @@ elif [ "$OS" = "Fedora" ]; then
 		neovim \
 		wl-clipboard \
 		firewall-config \
+		dnf-utils \
+		dnf-plugin-tracer \
 		power-profiles-daemon \
+		policycoreutils-sandbox \
 		code \
+		conda \
 		unrar \
 		gstreamer1-plugins-bad-free \
 		gstreamer1-plugins-bad-free-extras \
@@ -276,7 +280,8 @@ if ! [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	flatpak install -y flathub com.spotify.Client
 	flatpak install -y flathub org.telegram.desktop
-	flatpak install -y flatpak install flathub com.discordapp.Discord
+	flatpak install -y flathub com.discordapp.Discord
+	flatpak install -y flathub com.github.tchx84.Flatseal
 fi
 
 echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
@@ -288,6 +293,8 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM
 
 mkdir -p "$HOME/.local/share/fonts"
 aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/SourceCodePro/Regular/complete/Sauce%20Code%20Pro%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
+aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/UbuntuMono/Regular/complete/Ubuntu%20Mono%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
+aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/FiraMono/Regular/complete/Fira%20Mono%20Regular%20Nerd%20Font%20Complete%20Mono.otf -d "$HOME/.local/share/fonts"
 
 if [ -f "$HOME/.ssh/id_ed25519" ]; then
 	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
