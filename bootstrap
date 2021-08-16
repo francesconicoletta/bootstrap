@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -euo pipefail
 
 if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -23,6 +23,7 @@ else
 fi
 
 echo "Distro: $OS"
+GNOMEVER="$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)"
 
 echo "[/]
 sources=[('xkb', 'us')]
@@ -62,10 +63,11 @@ echo "[/]
 show-extensions-notice=false" | dconf load /org/gnome/tweaks/
 echo "[/]
 sleep-inactive-ac-timeout=3600
-sleep-inactive-ac-type='nothing'" | dconf load /org/gnome/settings-daemon/plugins/power
+sleep-inactive-ac-type='nothing'" | dconf load /org/gnome/settings-daemon/plugins/power/
 
+gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
 
-if [ "$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)" -lt 40 ]; then
+if [ "$GNOMEVER" -lt 40 ]; then
 	echo "[/]
 	terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
 else
@@ -104,11 +106,8 @@ if [ "$OS" = "Ubuntu" ]; then
 		echo "$PASSWORD" | sudo -S apt install -y power-profiles-daemon
 	fi
 
-	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-	echo "$PASSWORD" | sudo -S install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
-	echo "$PASSWORD" | sudo -S sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
-	rm -f packages.microsoft.gpg
-
+	wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg | gpg --dearmor | sudo dd of=/etc/apt/trusted.gpg.d/vscodium.gpg
+	echo 'deb https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/debs/ vscodium main' | sudo tee --append /etc/apt/sources.list.d/vscodium.list
 	echo "$PASSWORD" | sudo -S apt update
 	echo "$PASSWORD" | sudo -S apt upgrade -y
 	echo "$PASSWORD" | sudo -S DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -146,7 +145,7 @@ if [ "$OS" = "Ubuntu" ]; then
 		podman \
 		ubuntu-restricted-extras \
 		neovim \
-		code
+		codium
 
 elif [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S sed -i '/VerbosePkgLists/s/^#//g' /etc/pacman.conf
@@ -189,7 +188,9 @@ elif [ "$OS" = "Arch Linux" ]; then
 		discord \
 		sof-firmware \ # required for ThinkPad T14 audio
 		util-linux \
-		neovim
+		neovim \
+		code \
+		shellcheck
 
 	git clone https://aur.archlinux.org/paru.git
 	cd paru || exit
@@ -199,8 +200,7 @@ elif [ "$OS" = "Arch Linux" ]; then
 
 	echo "$PASSWORD" | sudo -S paru -S --noconfirm \
 		spotify \
-		power-profiles-daemon \
-		visual-studio-code-bin
+		power-profiles-daemon
 
 elif [ "$OS" = "Fedora" ]; then
 	echo "$PASSWORD" | sudo -S dnf install -y \
@@ -208,8 +208,8 @@ elif [ "$OS" = "Fedora" ]; then
 	echo "$PASSWORD" | sudo -S dnf install -y \
 		"https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 
-	echo "$PASSWORD" | sudo -S rpm --import https://packages.microsoft.com/keys/microsoft.asc
-	echo "$PASSWORD" | sudo -S sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+	echo "$PASSWORD" | sudo -S rpmkeys --import https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
+	printf "[gitlab.com_paulcarroty_vscodium_repo]\nname=gitlab.com_paulcarroty_vscodium_repo\nbaseurl=https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/rpms/\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg" | sudo tee -a /etc/yum.repos.d/vscodium.repo
 
 	echo "$PASSWORD" | sudo -S dnf update -y
 	echo "$PASSWORD" | sudo -S dnf install -y \
@@ -252,7 +252,7 @@ elif [ "$OS" = "Fedora" ]; then
 		dnf-plugin-tracer \
 		power-profiles-daemon \
 		policycoreutils-sandbox \
-		code \
+		codium \
 		conda \
 		unrar \
 		gstreamer1-plugins-bad-free \
@@ -265,7 +265,8 @@ elif [ "$OS" = "Fedora" ]; then
 		gstreamer1-plugin-openh264 \
 		gstreamer1-libav \
 		lame \
-		gnome-extensions-app
+		gnome-extensions-app \
+		ShellCheck
 else
 	printf "\nDistro not supported.\n"
 fi
@@ -285,6 +286,8 @@ if ! [ "$OS" = "Arch Linux" ]; then
 	flatpak install -y flathub org.telegram.desktop
 	flatpak install -y flathub com.discordapp.Discord
 	flatpak install -y flathub com.github.tchx84.Flatseal
+	#flatpak override --user --env=QT_QPA_PLATFORM=wayland org.telegram.desktop
+	#flatpak override --user --env=QT_QPA_PLATFORM=xcb org.telegram.desktop
 fi
 
 echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
@@ -297,7 +300,6 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM
 mkdir -p "$HOME/.local/share/fonts"
 aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/SourceCodePro/Regular/complete/Sauce%20Code%20Pro%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
 aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/UbuntuMono/Regular/complete/Ubuntu%20Mono%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
-aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/FiraMono/Regular/complete/Fira%20Mono%20Regular%20Nerd%20Font%20Complete%20Mono.otf -d "$HOME/.local/share/fonts"
 
 if [ -f "$HOME/.ssh/id_ed25519" ]; then
 	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
@@ -307,11 +309,9 @@ else
 fi
 
 rm "$HOME/.zshrc"
-rm "$HOME/.zshenv"
 cd "$HOME/.dotfiles" || exit
 make stow
 
-# FZF
 grep -v "source /usr/share/doc/fzf/examples/key-bindings.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
 grep -v "source /usr/share/doc/fzf/examples/completion.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
 grep -v "source /usr/share/fzf/shell/key-bindings.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
@@ -331,4 +331,16 @@ fi
 git config --global user.email "francesconico86@gmail.com"
 git config --global user.name "Francesco Nicoletta Puzzillo"
 
+echo "$PASSWORD" | sudo -S mkdir -m 0755 /nix
+echo "$PASSWORD" | sudo -S chown "$USER" /nix
+curl -L https://nixos.org/nix/install | sh -s
+. "$HOME/.nix-profile/etc/profile.d/nix.sh"
+
 nvim
+
+gdbus call --session \
+    --dest=org.freedesktop.Notifications \
+    --object-path=/org/freedesktop/Notifications \
+    --method=org.freedesktop.Notifications.Notify \
+    "bootstrap" 0 "" "bootstrap" "Completed successfully." \
+    '[]' '{"urgency": <1>}' 5000
