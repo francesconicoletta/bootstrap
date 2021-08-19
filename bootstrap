@@ -90,7 +90,10 @@ stty echo
 printf "\n"
 
 if [ "$OS" = "Ubuntu" ]; then
+	gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize-or-previews'
+
 	echo "$PASSWORD" | sudo -S snap remove snap-store
+	echo "$PASSWORD" | sudo -S snap refresh
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
 	echo "$PASSWORD" | sudo -S apt update
 	echo "$PASSWORD" | sudo -S apt install -y curl wget
@@ -145,7 +148,8 @@ if [ "$OS" = "Ubuntu" ]; then
 		podman \
 		ubuntu-restricted-extras \
 		neovim \
-		codium
+		codium \
+		gnome-shell-pomodoro
 
 elif [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S sed -i '/VerbosePkgLists/s/^#//g' /etc/pacman.conf
@@ -200,7 +204,8 @@ elif [ "$OS" = "Arch Linux" ]; then
 
 	echo "$PASSWORD" | sudo -S paru -S --noconfirm \
 		spotify \
-		power-profiles-daemon
+		power-profiles-daemon \
+		gnome-shell-pomodoro
 
 elif [ "$OS" = "Fedora" ]; then
 	echo "$PASSWORD" | sudo -S dnf install -y \
@@ -266,7 +271,8 @@ elif [ "$OS" = "Fedora" ]; then
 		gstreamer1-libav \
 		lame \
 		gnome-extensions-app \
-		ShellCheck
+		ShellCheck \
+		gnome-shell-extension-pomodoro
 else
 	printf "\nDistro not supported.\n"
 fi
