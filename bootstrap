@@ -22,7 +22,6 @@ else
     VER=$(uname -r)
 fi
 
-echo "Distro: $OS"
 GNOMEVER="$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)"
 
 echo "[/]
@@ -105,8 +104,6 @@ if [ "$OS" = "Ubuntu" ]; then
 		curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
 		echo "$PASSWORD" | sudo -S apt install -y tlp
 		echo "$PASSWORD" | sudo -S systemctl enable --now tlp
-	else
-		echo "$PASSWORD" | sudo -S apt install -y power-profiles-daemon
 	fi
 
 	wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg | gpg --dearmor | sudo dd of=/etc/apt/trusted.gpg.d/vscodium.gpg
@@ -146,7 +143,6 @@ if [ "$OS" = "Ubuntu" ]; then
 		flatpak \
 		syncthing \
 		podman \
-		ubuntu-restricted-extras \
 		neovim \
 		codium \
 		gnome-shell-pomodoro
@@ -257,6 +253,7 @@ elif [ "$OS" = "Fedora" ]; then
 		dnf-plugin-tracer \
 		power-profiles-daemon \
 		policycoreutils-sandbox \
+		selinux-policy-sandbox \
 		codium \
 		conda \
 		unrar \
@@ -288,6 +285,7 @@ pip3 install youtube-dl pynvim --user
 
 if ! [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+	flatpak update -y
 	flatpak install -y flathub com.spotify.Client
 	flatpak install -y flathub org.telegram.desktop
 	flatpak install -y flathub com.discordapp.Discord
@@ -343,6 +341,11 @@ curl -L https://nixos.org/nix/install | sh -s
 . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 
 nvim
+
+
+if [ "$OS" = "Ubuntu" ]; then
+	echo "$PASSWORD" | sudo -S apt install -y ubuntu-restricted-extras
+fi
 
 gdbus call --session \
     --dest=org.freedesktop.Notifications \
