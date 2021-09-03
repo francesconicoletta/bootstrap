@@ -91,8 +91,10 @@ printf "\n"
 if [ "$OS" = "Ubuntu" ]; then
 	gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize-or-previews'
 
-	echo "$PASSWORD" | sudo -S snap remove snap-store
-	echo "$PASSWORD" | sudo -S snap refresh
+	echo "$PASSWORD" | sudo -S apt -y autoremove --purge snapd
+	echo "$PASSWORD" | sudo -S apt-mark hold snapd
+	echo "$PASSWORD" | sudo -S rm -rf /var/cache/snapd /var/lib/snapd /snap /var/snap "$HOME/snap"
+
 	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
 	echo "$PASSWORD" | sudo -S apt update
 	echo "$PASSWORD" | sudo -S apt install -y curl wget
@@ -281,7 +283,7 @@ echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
 echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
 echo "SUBSYSTEM==\"usb\", ACTION==\"add\", ENV{ID_MODEL}==\"iPhone\", RUN+=\"/usr/bin/env sh -c 'echo Fast > /sys/class/power_supply/apple_mfi_fastcharge/charge_type'\"" | sudo tee /etc/udev/rules.d/99-ios-fastcharge.rules.j2
 
-pip3 install youtube-dl pynvim --user
+pip3 install yt-dlp pynvim --user
 
 if ! [ "$OS" = "Arch Linux" ]; then
 	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -312,7 +314,7 @@ else
 	git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
 fi
 
-rm "$HOME/.zshrc"
+rm "$HOME/.zsh*"
 cd "$HOME/.dotfiles" || exit
 make stow
 
@@ -332,7 +334,7 @@ elif [ "$OS" = "Arch Linux" ]; then
 	echo "source /usr/share/fzf/completion.zsh" | tee -a "$HOME/.zshrc"
 fi
 
-git config --global user.email "francesconico86@gmail.com"
+git config --global user.email "francesconicoletta@nomnp.com"
 git config --global user.name "Francesco Nicoletta Puzzillo"
 
 echo "$PASSWORD" | sudo -S mkdir -m 0755 /nix
@@ -341,7 +343,6 @@ curl -L https://nixos.org/nix/install | sh -s
 . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 
 nvim
-
 
 if [ "$OS" = "Ubuntu" ]; then
 	echo "$PASSWORD" | sudo -S apt install -y ubuntu-restricted-extras
