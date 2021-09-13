@@ -269,6 +269,7 @@ elif [ "$OS" = "Fedora" ]; then
 		gstreamer1-plugin-openh264 \
 		gstreamer1-libav \
 		lame \
+		npm \
 		gnome-extensions-app \
 		ShellCheck \
 		gnome-shell-extension-pomodoro
@@ -341,8 +342,7 @@ echo "$PASSWORD" | sudo -S mkdir -m 0755 /nix
 echo "$PASSWORD" | sudo -S chown "$USER" /nix
 curl -L https://nixos.org/nix/install | sh -s
 . "$HOME/.nix-profile/etc/profile.d/nix.sh"
-
-nvim
+nix-env -i sumneko-lua-language-server
 
 if [ "$OS" = "Ubuntu" ]; then
 	echo "$PASSWORD" | sudo -S apt install -y ubuntu-restricted-extras
