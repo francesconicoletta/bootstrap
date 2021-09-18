@@ -351,7 +351,8 @@ curl -L https://nixos.org/nix/install | sh -s
 nix-env -i sumneko-lua-language-server
 
 if [ "$OS" = "Ubuntu" ]; then
-	echo "$PASSWORD" | sudo -S apt install -y ubuntu-restricted-extras
+	echo "You need to manually install restricted extras"
+	echo "sudo apt install ubuntu-restricted-extras"
 fi
 
 gdbus call --session \
