@@ -344,7 +344,7 @@ fi
 git config --global user.email "francesconicoletta@nomnp.com"
 git config --global user.name "Francesco Nicoletta Puzzillo"
 
-echo "$PASSWORD" | sudo -S mkdir -m 0755 /nix
+echo "$PASSWORD" | sudo -S mkdir -p -m 0755 /nix
 echo "$PASSWORD" | sudo -S chown "$USER" /nix
 curl -L https://nixos.org/nix/install | sh -s
 . "$HOME/.nix-profile/etc/profile.d/nix.sh"
