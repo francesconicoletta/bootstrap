@@ -272,7 +272,8 @@ elif [ "$OS" = "Fedora" ]; then
 		npm \
 		gnome-extensions-app \
 		ShellCheck \
-		gnome-shell-extension-pomodoro
+		gnome-shell-extension-pomodoro \
+		golang-x-tools-gopls
 else
 	printf "\nDistro not supported.\n"
 fi
@@ -298,6 +299,7 @@ if ! [ "$OS" = "Arch Linux" ]; then
 fi
 
 echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
+rm -rf "$HOME/.oh-my-zsh"
 export CHSH=no
 export RUNZSH=no
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -308,6 +310,10 @@ mkdir -p "$HOME/.local/share/fonts"
 aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/SourceCodePro/Regular/complete/Sauce%20Code%20Pro%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
 aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/UbuntuMono/Regular/complete/Ubuntu%20Mono%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
 
+if [ -d "$HOME/.dotfiles" ]; then
+	mv "$HOME/.dotfiles" "$HOME/.dotfiles-old"
+fi
+
 if [ -f "$HOME/.ssh/id_ed25519" ]; then
 	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
 else
@@ -315,7 +321,7 @@ else
 	git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
 fi
 
-rm "$HOME/.zsh*"
+rm -f "$HOME/.zshrc" "$HOME/.zshenv"
 cd "$HOME/.dotfiles" || exit
 make stow
 
