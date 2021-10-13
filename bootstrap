@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -euo
-
 FEDORACLIPACK="ShellCheck \
 	aria2 \
 	curl \
@@ -239,11 +237,26 @@ gnomeconfig() {
 }
 
 purgesnap() {
-	if dpkg -l snapd; then
-		sudo apt-get -y autoremove --purge snapd
-		sudo apt-mark hold snapd
-		sudo rm -rf /var/cache/snapd /var/lib/snapd /snap /var/snap "$HOME/snap"
-	fi
+	case "$OS" in
+		Ubuntu | Debian )
+			if dpkg -l snapd; then
+				sudo apt-get -y autoremove --purge snapd
+				sudo apt-mark hold snapd
+			fi
+			;;
+		Fedora )
+			if rpm -q snapd; then
+				sudo dnf autoremove snapd
+			fi
+			;;
+		"Arch Linux" )
+			if pacman -Qi snapd; then
+				sudo pacman -Rs snapd
+			fi
+			;;
+	esac
+
+	sudo rm -rf /var/cache/snapd /var/lib/snapd /snap /var/snap "$HOME/snap"
 }
 
 installeditors() {
@@ -430,8 +443,8 @@ isgnomeinstalled
 gnomeconfig
 packagesetup
 purgesnap
-installeditors
 installcli
+installeditors
 
 if ! grep hypervisor < /proc/cpuinfo; then
 	installgui
