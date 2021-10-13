@@ -1,294 +1,336 @@
-#!/bin/bash
+#!/bin/sh
 
-set -euo pipefail
+set -euo
 
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS=$NAME
-    VER=$VERSION_ID
-elif type lsb_release >/dev/null 2>&1; then
-    OS=$(lsb_release -si)
-    VER=$(lsb_release -sr)
-elif [ -f /etc/lsb-release ]; then
-    . /etc/lsb-release
-    OS=$DISTRIB_ID
-    VER=$DISTRIB_RELEASE
-elif [ -f /usr/lib/os-release ]; then
-    . /usr/lib/os-release
-    OS=$NAME
-    VER=$VERSION_ID
-else
-    OS=$(uname -s)
-    VER=$(uname -r)
-fi
+FEDORACLIPACK="ShellCheck \
+	aria2 \
+	curl \
+	dnf-plugin-tracer \
+	dnf-utils \
+	firewall-config \
+	flatpak \
+	fzf \
+	git \
+	htop \
+	mlocate \
+	newsboat \
+	podman \
+	policycoreutils-sandbox \
+	python3-pip \
+	ranger \
+	ripgrep \
+	selinux-policy-sandbox \
+	stow \
+	tmux \
+	toolbox \
+	tree \
+	unrar \
+	util-linux-user \
+	zsh"
 
-GNOMEVER="$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)"
+FEDORAGUIPACK="chromium \
+	deja-dup \
+	firefox \
+	gnome-extensions-app \
+	gnome-shell-extension-appindicator \
+	gnome-tweaks \
+	gstreamer1-libav \
+	gstreamer1-plugin-openh264 \
+	gstreamer1-plugins-bad-free \
+	gstreamer1-plugins-bad-free-extras \
+	gstreamer1-plugins-base \
+	gstreamer1-plugins-good \
+	gstreamer1-plugins-good-extras \
+	gstreamer1-plugins-good-gtk \
+	gstreamer1-plugins-good-qt \
+	mpv \
+	rhythmbox \
+	shotwell \
+	thunderbird \
+	timeshift \
+	transmission \
+	virt-manager \
+	wl-clipboard"
 
-echo "[/]
-sources=[('xkb', 'us')]
-xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']" | dconf load /org/gnome/desktop/input-sources/
-echo "[/]
-click-method='fingers'
-tap-to-click=false
-two-finger-scrolling-enabled=true" | dconf load /org/gnome/desktop/pheripherals/touchpad/
-echo "[/]
-close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
-echo "[/]
-button-layout='appmenu:minimize,maximize,close'
-resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
-echo "[/]
-night-light-enabled=true
-night-light-temperature=uint32 3981" | dconf load /org/gnome/settings-daemon/plugins/color/
-echo "[/]
-center-new-windows=true" | dconf load /org/gnome/mutter/
-echo "[/]
-default-zoom-level='small'
-use-tree-view=true" | dconf load /org/gnome/nautilus/list-view/
-echo "[/]
-default-folder-viewer='list-view'
-search-filter-time-type='last_modified'
-search-view='list-view'
-show-create-link=true
-show-delete-permanently=true" | dconf load /org/gnome/nautilus/preferences/
-echo "[/]
-clock-show-date=true
-clock-show-seconds=true
-clock-show-weekday=true
-enable-hot-corners=true
-gtk-im-module='gtk-im-context-simple'
-show-battery-percentage=true
-text-scaling-factor=1.0" | dconf load /org/gnome/desktop/interface/
-echo "[/]
-show-extensions-notice=false" | dconf load /org/gnome/tweaks/
-echo "[/]
-sleep-inactive-ac-timeout=3600
-sleep-inactive-ac-type='nothing'" | dconf load /org/gnome/settings-daemon/plugins/power/
+DEBCLIPACK="aria2 \
+	curl \
+	firewall-config \
+	firewalld \
+	flatpak \
+	fzf \
+	git \
+	htop \
+	mlocate \
+	newsboat \
+	podman \
+	python3-pip \
+	ranger \
+	ripgrep \
+	stow \
+	tmux \
+	tmux-plugin-manager \
+	tmuxinator \
+	tree \
+	wget \
+	zsh"
 
-gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+DEBGUIPACK="deja-dup \
+	firefox \
+	gnome-tweaks \
+	mpv \
+	rhythmbox \
+	shotwell \
+	thunderbird \
+	timeshift \
+	transmission \
+	virt-manager \
+	xclip"
 
-if [ "$GNOMEVER" -lt 40 ]; then
-	echo "[/]
-	terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
-else
-	echo "[/]
-	custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
+ARCHCLIPACK="aria2 \
+	base-devel \
+	curl \
+	firewalld \
+	fzf \
+	git \
+	htop \
+	mlocate \
+	newsboat \
+	podman \
+	python-pip \
+	ranger \
+	ripgrep \
+	shellcheck \
+	sof-firmware \
+	stow \
+	tmux \
+	toolbox \
+	tree \
+	util-linux \
+	zsh"
 
-	[custom-keybindings/custom0]
-	binding='<Super>Return'
-	command='gnome-terminal'
-	name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
-fi
+ARCHGUIPACK="chromium \
+	deja-dup \
+	discord \
+	firefox \
+	gnome-tweaks \
+	mpv \
+	rhythmbox \
+	shotwell \
+	telegram-desktop \
+	thunderbird \
+	transmission-gtk \
+	virt-manager \
+	wl-clipboard"
 
-dir=$(cd -- "$(dirname -- "$0")" && pwd)
-cd "$dir" || exit
+startsudo() {
+    sudo -v
+    ( while true; do sudo -v; sleep 50; done; ) &
+    SUDO_PID="$!"
+    trap stopsudo INT TERM
+}
 
-stty -echo
-printf "Password: "
-read -r PASSWORD
-stty echo
-printf "\n"
+stopsudo() {
+    kill "$SUDO_PID"
+    trap - INT TERM
+    sudo -k
+}
 
-if [ "$OS" = "Ubuntu" ]; then
-	gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize-or-previews'
-
-	echo "$PASSWORD" | sudo -S apt -y autoremove --purge snapd
-	echo "$PASSWORD" | sudo -S apt-mark hold snapd
-	echo "$PASSWORD" | sudo -S rm -rf /var/cache/snapd /var/lib/snapd /snap /var/snap "$HOME/snap"
-
-	echo "$PASSWORD" | sudo -S add-apt-repository -y ppa:neovim-ppa/unstable
-	echo "$PASSWORD" | sudo -S apt update
-	echo "$PASSWORD" | sudo -S apt install -y curl wget
-
-	if [ "$(echo "$VER" | cut -d'.' -f1)" -lt 21 ]; then
-		# Add Podman repo
+getos() {
+	if [ -f /etc/os-release ]; then
 		. /etc/os-release
-		echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
-		curl -L "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_${VERSION_ID}/Release.key" | sudo apt-key add -
-		echo "$PASSWORD" | sudo -S apt install -y tlp
-		echo "$PASSWORD" | sudo -S systemctl enable --now tlp
+		OS=$NAME
+		VER=$VERSION_ID
+	elif type lsb_release >/dev/null 2>&1; then
+		OS=$(lsb_release -si)
+		VER=$(lsb_release -sr)
+	elif [ -f /etc/lsb-release ]; then
+		. /etc/lsb-release
+		OS=$DISTRIB_ID
+		VER=$DISTRIB_RELEASE
+	elif [ -f /usr/lib/os-release ]; then
+		. /usr/lib/os-release
+		OS=$NAME
+		VER=$VERSION_ID
+	else
+		OS=$(uname -s)
+		VER=$(uname -r)
 	fi
+}
 
-	wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg | gpg --dearmor | sudo dd of=/etc/apt/trusted.gpg.d/vscodium.gpg
-	echo 'deb https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/debs/ vscodium main' | sudo tee --append /etc/apt/sources.list.d/vscodium.list
-	echo "$PASSWORD" | sudo -S apt update
-	echo "$PASSWORD" | sudo -S apt upgrade -y
-	echo "$PASSWORD" | sudo -S DEBIAN_FRONTEND=noninteractive apt install -y \
-		git \
-		zsh \
-		aria2 \
-		ranger \
-		xclip \
-		htop \
-		python3-pip \
-		newsboat \
-		r-base \
-		fzf \
-		ripgrep \
-		stow \
-		tmux \
-		tmuxinator \
-		tmux-plugin-manager \
-		tree \
-		mlocate \
-		mpv \
-		firefox \
-		timeshift \
-		transmission \
-		deja-dup \
-		rhythmbox \
-		thunderbird \
-		shotwell \
-		gnome-tweaks \
-		virt-manager \
-		firewalld \
-		firewall-config \
-		flatpak \
-		syncthing \
-		podman \
-		neovim \
-		codium \
-		gnome-shell-pomodoro
+isgnomeinstalled() {
+	case "$OS" in
+		Ubuntu | Debian )
+			dpkg -l gnome-shell
+			;;
+		Fedora )
+			rpm -q gnome-shell
+			;;
+		"Arch Linux" )
+			pacman -Qi gnome-shell
+			;;
+	esac
 
-elif [ "$OS" = "Arch Linux" ]; then
-	echo "$PASSWORD" | sudo -S sed -i '/VerbosePkgLists/s/^#//g' /etc/pacman.conf
-	echo "$PASSWORD" | sudo -S sed -i '/Color/s/^#//g' /etc/pacman.conf
-	echo "$PASSWORD" | sudo -S sed -i '/ParallelDownloads/c\ParallelDownloads = 5' /etc/pacman.conf
+	if [ -z $? ]; then
+		GNOMEVER="$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)"
+	fi
+}
 
-	echo "$PASSWORD" | sudo -S pacman -Syu --noconfirm --needed \
-		git \
-		curl \
-		zsh \
-		aria2 \
-		ranger \
-		htop \
-		python-pip \
-		newsboat \
-		r \
-		fzf \
-		ripgrep \
-		stow \
-		tmux \
-		tree \
-		mlocate \
-		mpv \
-		firefox \
-		transmission-gtk \
-		deja-dup \
-		rhythmbox \
-		thunderbird \
-		shotwell \
-		gnome-tweaks \
-		virt-manager \
-		podman \
-		toolbox \
-		telegram-desktop \
-		base-devel \
-		wl-clipboard \
-		firewalld \
-		syncthing \
-		chromium \
-		discord \
-		sof-firmware \ # required for ThinkPad T14 audio
-		util-linux \
-		neovim \
-		code \
-		shellcheck
+gnomeconfig() {
+	if [ -n "${GNOMEVER+x}" ]; then
+		echo "[/]
+		sources=[('xkb', 'us')]
+		xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']" | dconf load /org/gnome/desktop/input-sources/
+		echo "[/]
+		click-method='fingers'
+		tap-to-click=false
+		two-finger-scrolling-enabled=true" | dconf load /org/gnome/desktop/pheripherals/touchpad/
+		echo "[/]
+		close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
+		echo "[/]
+		button-layout='appmenu:minimize,maximize,close'
+		resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
+		echo "[/]
+		night-light-enabled=true
+		night-light-temperature=uint32 3981" | dconf load /org/gnome/settings-daemon/plugins/color/
+		echo "[/]
+		center-new-windows=true" | dconf load /org/gnome/mutter/
+		echo "[/]
+		default-zoom-level='small'
+		use-tree-view=true" | dconf load /org/gnome/nautilus/list-view/
+		echo "[/]
+		default-folder-viewer='list-view'
+		search-filter-time-type='last_modified'
+		search-view='list-view'
+		show-create-link=true
+		show-delete-permanently=true" | dconf load /org/gnome/nautilus/preferences/
+		echo "[/]
+		clock-show-date=true
+		clock-show-seconds=true
+		clock-show-weekday=true
+		enable-hot-corners=true
+		gtk-im-module='gtk-im-context-simple'
+		show-battery-percentage=true
+		text-scaling-factor=1.0" | dconf load /org/gnome/desktop/interface/
+		echo "[/]
+		show-extensions-notice=false" | dconf load /org/gnome/tweaks/
+		echo "[/]
+		sleep-inactive-ac-timeout=3600
+		sleep-inactive-ac-type='nothing'" | dconf load /org/gnome/settings-daemon/plugins/power/
 
-	git clone https://aur.archlinux.org/paru.git
-	cd paru || exit
-	#TODO: makepkg needs sudo
-	makepkg -si
-	rm -rf paru
+		gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
 
-	echo "$PASSWORD" | sudo -S paru -S --noconfirm \
-		spotify \
-		power-profiles-daemon \
-		gnome-shell-pomodoro
+		if [ "$GNOMEVER" -lt 40 ]; then
+			echo "[/]
+			terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
+		else
+			echo "[/]
+			custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
 
-elif [ "$OS" = "Fedora" ]; then
-	echo "$PASSWORD" | sudo -S dnf install -y \
-		"https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
-	echo "$PASSWORD" | sudo -S dnf install -y \
-		"https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+			[custom-keybindings/custom0]
+			binding='<Super>Return'
+			command='gnome-terminal'
+			name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
+		fi
 
-	echo "$PASSWORD" | sudo -S rpmkeys --import https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
-	printf "[gitlab.com_paulcarroty_vscodium_repo]\nname=gitlab.com_paulcarroty_vscodium_repo\nbaseurl=https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/rpms/\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg" | sudo tee -a /etc/yum.repos.d/vscodium.repo
+		if [ "$OS" = "Ubuntu" ]; then
+			gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize-or-previews'
+		fi
+	fi
+}
 
-	echo "$PASSWORD" | sudo -S dnf update -y
-	echo "$PASSWORD" | sudo -S dnf install -y \
-		git \
-		curl \
-		zsh \
-		aria2 \
-		ranger \
-		xclip \
-		htop \
-		util-linux-user \
-		python3-pip \
-		newsboat \
-		R \
-		fzf \
-		ripgrep \
-		stow \
-		tmux \
-		tree \
-		mlocate \
-		mpv \
-		firefox \
-		timeshift \
-		transmission \
-		deja-dup \
-		rhythmbox \
-		thunderbird \
-		shotwell \
-		gnome-tweaks \
-		virt-manager \
-		podman \
-		toolbox \
-		flatpak \
-		syncthing \
-		chromium \
-		neovim \
-		wl-clipboard \
-		firewall-config \
-		dnf-utils \
-		dnf-plugin-tracer \
-		power-profiles-daemon \
-		policycoreutils-sandbox \
-		selinux-policy-sandbox \
-		codium \
-		conda \
-		unrar \
-		gstreamer1-plugins-bad-free \
-		gstreamer1-plugins-bad-free-extras \
-		gstreamer1-plugins-good \
-		gstreamer1-plugins-good-extras \
-		gstreamer1-plugins-good-gtk \
-		gstreamer1-plugins-good-qt \
-		gstreamer1-plugins-base \
-		gstreamer1-plugin-openh264 \
-		gstreamer1-libav \
-		lame \
-		npm \
-		gnome-extensions-app \
-		ShellCheck \
-		gnome-shell-extension-pomodoro \
-		golang-x-tools-gopls
-else
-	printf "\nDistro not supported.\n"
-fi
+purgesnap() {
+	if dpkg -l snapd; then
+		sudo apt-get -y autoremove --purge snapd
+		sudo apt-mark hold snapd
+		sudo rm -rf /var/cache/snapd /var/lib/snapd /snap /var/snap "$HOME/snap"
+	fi
+}
 
-echo "$PASSWORD" | sudo -S systemctl enable --now firewalld
-echo "$PASSWORD" | sudo -S systemctl enable fstrim.timer
-echo "$PASSWORD" | sudo -S systemctl disable --now bluetooth
-echo "$PASSWORD" | sudo -S usermod -aG libvirt "$USER"
-echo "$PASSWORD" | sudo -S usermod -aG kvm "$USER"
-echo "SUBSYSTEM==\"usb\", ACTION==\"add\", ENV{ID_MODEL}==\"iPhone\", RUN+=\"/usr/bin/env sh -c 'echo Fast > /sys/class/power_supply/apple_mfi_fastcharge/charge_type'\"" | sudo tee /etc/udev/rules.d/99-ios-fastcharge.rules.j2
+installeditors() {
+	case "$OS" in
+		Ubuntu | Debian )
+			NVIMPATH="$HOME/.local/bin/nvim"
+			NVIMURL=$(curl -L -s https://api.github.com/repos/neovim/neovim/releases/latest | grep -o -E "https://(.*)neovim(.*)nvim.appimage" | head -1)
+			mkdir -p "$NVIMPATH"
+			curl -L -s "$NVIMURL" -o "$NVIMPATH"
+			chmod +x "$NVIMPATH"
+			;;
+		Fedora )
+			sudo dnf install -y neovim
+			;;
+		"Arch Linux" )
+			sudo pacman -Syu --noconfirm --needed neovim
+			;;
+	esac
+	pip3 install yt-dlp pynvim --user
+}
 
-pip3 install yt-dlp pynvim --user
+installcli() {
+	case "$OS" in
+		Ubuntu | Debian )
+			sudo apt-get install -y "$DEBCLIPACK"
+			;;
+		Fedora )
+			sudo dnf install -y "$FEDORACLIPACK"
+			;;
+		"Arch Linux" )
+			sudo pacman -Syu --noconfirm --needed "$ARCHCLIPACK"
+			;;
+	esac
+}
 
-if ! [ "$OS" = "Arch Linux" ]; then
-	echo "$PASSWORD" | sudo -S flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+installgui() {
+	case "$OS" in
+		Ubuntu | Debian )
+			sudo apt-get install -y "$DEBGUIPACK"
+			;;
+		Fedora )
+			sudo dnf install -y "$FEDORAGUIPACK"
+			;;
+		"Arch Linux" )
+			sudo pacman -Syu --noconfirm --needed "$ARCHGUIPACK"
+			;;
+	esac
+}
+
+packagesetup() {
+	case "$OS" in
+		Ubuntu | Debian )
+			export DEBIAN_FRONTEND=noninteractive
+			sudo apt-get update && sudo apt-get upgrade -y
+			;;
+
+		Fedora )
+			sudo dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+			sudo dnf upgrade -y
+			;;
+
+		"Arch Linux" )
+			sudo sed -i '/VerbosePkgLists/s/^#//g' /etc/pacman.conf
+			sudo sed -i '/Color/s/^#//g' /etc/pacman.conf
+			sudo sed -i '/ParallelDownloads/c\ParallelDownloads = 5' /etc/pacman.conf
+			sudo pacman -Syu --noconfirm
+			;;
+	esac
+}
+
+enablefstrim() {
+	sudo systemctl enable fstrim.timer
+}
+
+enableiosfastcharge() {
+	echo "SUBSYSTEM==\"usb\", ACTION==\"add\", ENV{ID_MODEL}==\"iPhone\", RUN+=\"/usr/bin/env sh -c 'echo Fast > /sys/class/power_supply/apple_mfi_fastcharge/charge_type'\"" | sudo tee /etc/udev/rules.d/99-ios-fastcharge.rules.j2
+}
+
+services() {
+	sudo systemctl enable --now firewalld
+	sudo systemctl disable --now bluetooth
+	sudo usermod -aG libvirt "$USER"
+	sudo usermod -aG kvm "$USER"
+}
+
+installflatpaks() {
+	sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 	flatpak update -y
 	flatpak install -y flathub com.spotify.Client
 	flatpak install -y flathub org.telegram.desktop
@@ -296,68 +338,115 @@ if ! [ "$OS" = "Arch Linux" ]; then
 	flatpak install -y flathub com.github.tchx84.Flatseal
 	#flatpak override --user --env=QT_QPA_PLATFORM=wayland org.telegram.desktop
 	#flatpak override --user --env=QT_QPA_PLATFORM=xcb org.telegram.desktop
+}
+
+ohmyzsh() {
+	sudo chsh -s "$(command -v zsh)" "$USER"
+	rm -rf "$HOME/.oh-my-zsh"
+	export CHSH=no
+	export RUNZSH=no
+	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+	git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+}
+
+fonts() {
+	mkdir -p "$HOME/.local/share/fonts"
+	aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/SourceCodePro/Regular/complete/Sauce%20Code%20Pro%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
+	aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/UbuntuMono/Regular/complete/Ubuntu%20Mono%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
+}
+
+dotfiles() {
+	if [ -d "$HOME/.dotfiles" ]; then
+		mv "$HOME/.dotfiles" "$HOME/.dotfiles-old"
+	fi
+
+	if [ -f "$HOME/.ssh/id_ed25519" ]; then
+		git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+	else
+		printf "\nssh key not present.\n"
+		git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
+	fi
+
+	rm -f "$HOME/.zshrc" "$HOME/.zshenv"
+	cd "$HOME/.dotfiles" || exit
+	make stow
+
+	grep -v -e "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
+		-e "source /usr/share/doc/fzf/examples/completion.zsh" \
+		-e "source /usr/share/fzf/shell/key-bindings.zsh" \
+		-e "source /usr/share/fzf/key-bindings.zsh" \
+		-e "source /usr/share/fzf/completion.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"
+	mv "$HOME/.zshrc-old" "$HOME/.zshrc"
+
+	case "$OS" in
+		Ubuntu | Debian )
+			echo "source /usr/share/doc/fzf/examples/key-bindings.zsh" | tee -a "$HOME/.zshrc"
+			echo "source /usr/share/doc/fzf/examples/completion.zsh" | tee -a "$HOME/.zshrc"
+			;;
+		Fedora )
+			echo "source /usr/share/fzf/shell/key-bindings.zsh" | tee -a "$HOME/.zshrc"
+			;;
+		"Arch Linux" )
+			echo "source /usr/share/fzf/key-bindings.zsh" | tee -a "$HOME/.zshrc"
+			echo "source /usr/share/fzf/completion.zsh" | tee -a "$HOME/.zshrc"
+			;;
+	esac
+}
+
+gitconfig() {
+	git config --global user.email "francesconicoletta@nomnp.com"
+	git config --global user.name "Francesco Nicoletta Puzzillo"
+}
+
+nix() {
+	sudo mkdir -p -m 0755 /nix
+	sudo chown "$USER" /nix
+	curl -L https://nixos.org/nix/install | sh -s
+	. "$HOME/.nix-profile/etc/profile.d/nix.sh"
+	nix-env -i sumneko-lua-language-server
+	nix-env -i nixpkgs.ripgrep-all
+}
+
+notifyend() {
+	if [ -n "${GNOMEVER+x}" ]; then
+		gdbus call --session \
+			--dest=org.freedesktop.Notifications \
+			--object-path=/org/freedesktop/Notifications \
+			--method=org.freedesktop.Notifications.Notify \
+			"bootstrap" 0 "" "bootstrap" "Completed successfully." \
+			'[]' '{"urgency": <1>}' 5000
+	else
+		echo "Bootstrap completed successfully."
+	fi
+}
+
+dir=$(cd -- "$(dirname -- "$0")" && pwd)
+cd "$dir" || exit
+
+startsudo
+getos
+isgnomeinstalled
+gnomeconfig
+packagesetup
+purgesnap
+installeditors
+installcli
+
+if ! grep hypervisor < /proc/cpuinfo; then
+	installgui
+	enablefstrim
+	enableiosfastcharge
+	services
+	ohmyzsh
+	fonts
+	if ! [ "$OS" = "Arch Linux" ]; then
+		installflatpaks
+		nix
+	fi
 fi
 
-echo "$PASSWORD" | sudo -S chsh -s "$(command -v zsh)" "$USER"
-rm -rf "$HOME/.oh-my-zsh"
-export CHSH=no
-export RUNZSH=no
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-
-mkdir -p "$HOME/.local/share/fonts"
-aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/SourceCodePro/Regular/complete/Sauce%20Code%20Pro%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
-aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/UbuntuMono/Regular/complete/Ubuntu%20Mono%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
-
-if [ -d "$HOME/.dotfiles" ]; then
-	mv "$HOME/.dotfiles" "$HOME/.dotfiles-old"
-fi
-
-if [ -f "$HOME/.ssh/id_ed25519" ]; then
-	git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
-else
-	printf "\nssh key not present.\n"
-	git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
-fi
-
-rm -f "$HOME/.zshrc" "$HOME/.zshenv"
-cd "$HOME/.dotfiles" || exit
-make stow
-
-grep -v "source /usr/share/doc/fzf/examples/key-bindings.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
-grep -v "source /usr/share/doc/fzf/examples/completion.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
-grep -v "source /usr/share/fzf/shell/key-bindings.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
-grep -v "source /usr/share/fzf/key-bindings.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
-grep -v "source /usr/share/fzf/completion.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"; mv "$HOME/.zshrc-old" "$HOME/.zshrc"
-
-if [ "$OS" = "Ubuntu" ]; then
-	echo "source /usr/share/doc/fzf/examples/key-bindings.zsh" | tee -a "$HOME/.zshrc"
-	echo "source /usr/share/doc/fzf/examples/completion.zsh" | tee -a "$HOME/.zshrc"
-elif [ "$OS" = "Fedora" ]; then
-	echo "source /usr/share/fzf/shell/key-bindings.zsh" | tee -a "$HOME/.zshrc"
-elif [ "$OS" = "Arch Linux" ]; then
-	echo "source /usr/share/fzf/key-bindings.zsh" | tee -a "$HOME/.zshrc"
-	echo "source /usr/share/fzf/completion.zsh" | tee -a "$HOME/.zshrc"
-fi
-
-git config --global user.email "francesconicoletta@nomnp.com"
-git config --global user.name "Francesco Nicoletta Puzzillo"
-
-echo "$PASSWORD" | sudo -S mkdir -p -m 0755 /nix
-echo "$PASSWORD" | sudo -S chown "$USER" /nix
-curl -L https://nixos.org/nix/install | sh -s
-. "$HOME/.nix-profile/etc/profile.d/nix.sh"
-nix-env -i sumneko-lua-language-server
-
-if [ "$OS" = "Ubuntu" ]; then
-	echo "You need to manually install restricted extras"
-	echo "sudo apt install ubuntu-restricted-extras"
-fi
-
-gdbus call --session \
-    --dest=org.freedesktop.Notifications \
-    --object-path=/org/freedesktop/Notifications \
-    --method=org.freedesktop.Notifications.Notify \
-    "bootstrap" 0 "" "bootstrap" "Completed successfully." \
-    '[]' '{"urgency": <1>}' 5000
+gitconfig
+dotfiles
+stopsudo
+notifyend
