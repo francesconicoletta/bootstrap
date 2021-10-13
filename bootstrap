@@ -1,15 +1,12 @@
 #!/bin/sh
 
 FEDORACLIPACK="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils firewall-config flatpak fzf git htop mlocate newsboat podman policycoreutils-sandbox python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree unrar util-linux-user zsh"
-
 FEDORAGUIPACK="chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks gstreamer1-libav gstreamer1-plugin-openh264 gstreamer1-plugins-bad-free gstreamer1-plugins-bad-free-extras gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-good-extras gstreamer1-plugins-good-gtk gstreamer1-plugins-good-qt mpv rhythmbox shotwell thunderbird timeshift transmission virt-manager wl-clipboard"
 
 DEBCLIPACK="aria2 curl firewall-config firewalld flatpak fzf git htop mlocate newsboat podman python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget zsh"
-
 DEBGUIPACK="deja-dup firefox gnome-tweaks mpv rhythmbox shotwell thunderbird timeshift transmission virt-manager xclip"
 
 ARCHCLIPACK="aria2 base-devel curl firewalld fzf git htop mlocate newsboat podman python-pip ranger ripgrep shellcheck sof-firmware stow tmux toolbox tree util-linux zsh"
-
 ARCHGUIPACK="chromium deja-dup discord firefox gnome-tweaks mpv rhythmbox shotwell telegram-desktop thunderbird transmission-gtk virt-manager wl-clipboard"
 
 startsudo() {
@@ -167,19 +164,19 @@ installeditors() {
 			sudo pacman -Syu --noconfirm --needed neovim
 			;;
 	esac
-	pip3 install yt-dlp pynvim --user
+	pip3 install yt-dlp pynvim --user --no-warn-script-location
 }
 
 installcli() {
 	case "$OS" in
 		Ubuntu | Debian )
-			sudo apt-get install -y "$DEBCLIPACK"
+			sudo apt-get install -y $DEBCLIPACK
 			;;
 		Fedora )
-			sudo dnf install -y "$FEDORACLIPACK"
+			sudo dnf install -y $FEDORACLIPACK
 			;;
 		"Arch Linux" )
-			sudo pacman -Syu --noconfirm --needed "$ARCHCLIPACK"
+			sudo pacman -Syu --noconfirm --needed $ARCHCLIPACK
 			;;
 	esac
 }
@@ -187,13 +184,13 @@ installcli() {
 installgui() {
 	case "$OS" in
 		Ubuntu | Debian )
-			sudo apt-get install -y "$DEBGUIPACK"
+			sudo apt-get install -y $DEBGUIPACK
 			;;
 		Fedora )
-			sudo dnf install -y "$FEDORAGUIPACK"
+			sudo dnf install -y $FEDORAGUIPACK
 			;;
 		"Arch Linux" )
-			sudo pacman -Syu --noconfirm --needed "$ARCHGUIPACK"
+			sudo pacman -Syu --noconfirm --needed $ARCHGUIPACK
 			;;
 	esac
 }
