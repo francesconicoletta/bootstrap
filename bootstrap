@@ -164,7 +164,11 @@ installeditors() {
 			sudo pacman -Syu --noconfirm --needed neovim
 			;;
 	esac
-	pip3 install yt-dlp pynvim --user --no-warn-script-location
+	pip3 install pynvim --user --no-warn-script-location
+}
+
+installpip() {
+	pip3 install yt-dlp --user --no-warn-script-location
 }
 
 installcli() {
@@ -334,6 +338,7 @@ packagesetup
 purgesnap
 installcli
 installeditors
+installpip
 
 if ! grep hypervisor < /proc/cpuinfo; then
 	installgui
