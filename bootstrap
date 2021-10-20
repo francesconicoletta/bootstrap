@@ -120,29 +120,6 @@ gnomeconfig() {
 	fi
 }
 
-purgesnap() {
-	case "$OS" in
-		Ubuntu | Debian )
-			if dpkg -l snapd; then
-				sudo apt-get -y autoremove --purge snapd
-				sudo apt-mark hold snapd
-			fi
-			;;
-		Fedora )
-			if rpm -q snapd; then
-				sudo dnf autoremove snapd
-			fi
-			;;
-		"Arch Linux" )
-			if pacman -Qi snapd; then
-				sudo pacman -Rs snapd
-			fi
-			;;
-	esac
-
-	sudo rm -rf /var/cache/snapd /var/lib/snapd /snap /var/snap "$HOME/snap"
-}
-
 installeditors() {
 	case "$OS" in
 		Ubuntu | Debian )
@@ -313,7 +290,6 @@ startsudo
 getos
 gnomeconfig
 packagesetup
-purgesnap
 installcli
 installeditors
 installpip
