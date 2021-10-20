@@ -4,7 +4,7 @@ FEDORACLIPACK="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils flatpak fzf git
 FEDORAGUIPACK="chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv rhythmbox shotwell thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox"
 
 DEBCLIPACK="aria2 curl firewall-config firewalld flatpak fzf git htop mlocate newsboat podman python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget"
-DEBGUIPACK="deja-dup firefox gnome-tweaks mpv rhythmbox shotwell thunderbird timeshift transmission virt-manager xclip"
+DEBGUIPACK="deja-dup gnome-tweaks mpv rhythmbox shotwell thunderbird timeshift transmission virt-manager xclip"
 
 ARCHCLIPACK="aria2 base-devel curl firewalld fzf git htop mlocate newsboat podman python-pip ranger ripgrep shellcheck sof-firmware stow tmux toolbox tree util-linux"
 ARCHGUIPACK="chromium deja-dup discord firefox gnome-tweaks mpv rhythmbox shotwell telegram-desktop thunderbird transmission-gtk virt-manager wl-clipboard"
@@ -160,13 +160,15 @@ installcli() {
 
 installgui() {
 	case "$OS" in
-		Ubuntu | Debian )
-			sudo apt-get install -y $DEBGUIPACK
+		Ubuntu )
+			sudo apt-get install -y $DEBGUIPACK firefox
+			;;
+		Debian )
+			sudo apt-get install -y $DEBGUIPACK firefox-esr
 			;;
 		Fedora )
 			sudo dnf install -y $FEDORAGUIPACK
 			sudo dnf group install -y "Multimedia"
-
 			;;
 		"Arch Linux" )
 			sudo pacman -Syu --noconfirm --needed $ARCHGUIPACK
@@ -180,12 +182,10 @@ packagesetup() {
 			export DEBIAN_FRONTEND=noninteractive
 			sudo apt-get update && sudo apt-get upgrade -y
 			;;
-
 		Fedora )
 			sudo dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 			sudo dnf upgrade -y
 			;;
-
 		"Arch Linux" )
 			sudo sed -i '/VerbosePkgLists/s/^#//g' /etc/pacman.conf
 			sudo sed -i '/Color/s/^#//g' /etc/pacman.conf
