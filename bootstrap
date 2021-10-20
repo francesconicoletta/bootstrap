@@ -233,28 +233,28 @@ dotfiles() {
 		git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
 	fi
 
-	rm -f "$HOME/.zshrc" "$HOME/.zshenv"
+	mv "$HOME/.bashrc" "$HOME/.bashrc.old"
 	cd "$HOME/.dotfiles" || exit
 	make stow
 
-	grep -v -e "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
-		-e "source /usr/share/doc/fzf/examples/completion.zsh" \
-		-e "source /usr/share/fzf/shell/key-bindings.zsh" \
-		-e "source /usr/share/fzf/key-bindings.zsh" \
-		-e "source /usr/share/fzf/completion.zsh" "$HOME/.zshrc" > "$HOME/.zshrc-old"
-	mv "$HOME/.zshrc-old" "$HOME/.zshrc"
+	grep -v -e "source /usr/share/doc/fzf/examples/key-bindings.bash" \
+		-e "source /usr/share/doc/fzf/examples/completion.bash" \
+		-e "source /usr/share/fzf/shell/key-bindings.bash" \
+		-e "source /usr/share/fzf/key-bindings.bash" \
+		-e "source /usr/share/fzf/completion.bash" "$HOME/.bashrc" > "$HOME/.bashrc.copy"
+	mv "$HOME/.bashrc.copy" "$HOME/.bashrc"
 
 	case "$OS" in
 		Ubuntu | Debian )
-			echo "source /usr/share/doc/fzf/examples/key-bindings.zsh" | tee -a "$HOME/.zshrc"
-			echo "source /usr/share/doc/fzf/examples/completion.zsh" | tee -a "$HOME/.zshrc"
+			echo "source /usr/share/doc/fzf/examples/key-bindings.bash" | tee -a "$HOME/.bashrc"
+			echo "source /usr/share/doc/fzf/examples/completion.bash" | tee -a "$HOME/.bashrc"
 			;;
 		Fedora )
-			echo "source /usr/share/fzf/shell/key-bindings.zsh" | tee -a "$HOME/.zshrc"
+			echo "source /usr/share/fzf/shell/key-bindings.bash" | tee -a "$HOME/.bashrc"
 			;;
 		"Arch Linux" )
-			echo "source /usr/share/fzf/key-bindings.zsh" | tee -a "$HOME/.zshrc"
-			echo "source /usr/share/fzf/completion.zsh" | tee -a "$HOME/.zshrc"
+			echo "source /usr/share/fzf/key-bindings.bash" | tee -a "$HOME/.bashrc"
+			echo "source /usr/share/fzf/completion.bash" | tee -a "$HOME/.bashrc"
 			;;
 	esac
 }
