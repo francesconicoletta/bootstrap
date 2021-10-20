@@ -215,7 +215,6 @@ installflatpaks() {
 	flatpak update -y
 	flatpak install -y flathub com.spotify.Client
 	flatpak install -y flathub org.telegram.desktop
-	flatpak install -y flathub com.discordapp.Discord
 	flatpak install -y flathub com.github.tchx84.Flatseal
 	#flatpak override --user --env=QT_QPA_PLATFORM=wayland org.telegram.desktop
 	#flatpak override --user --env=QT_QPA_PLATFORM=xcb org.telegram.desktop
