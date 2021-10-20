@@ -123,12 +123,10 @@ gnomeconfig() {
 installeditors() {
 	case "$OS" in
 		Ubuntu | Debian )
-			NVIMPATH="$HOME/.local/bin/"
+			NVIMPATH="$HOME/.local/bin"
 			NVIMURL=$(curl -L -s https://api.github.com/repos/neovim/neovim/releases/latest | grep -o -E "https://(.*)neovim(.*)nvim.appimage" | head -1)
-			echo $NVIMURL
 			mkdir -p "$NVIMPATH"
-			curl -L -s "$NVIMURL" -o "$NVIMPATH/nvim"
-			chmod +x "$NVIMPATH/nvim"
+			curl -L -s "$NVIMURL" -o "$NVIMPATH/nvim" && chmod +x "$NVIMPATH/nvim"
 			;;
 		Fedora )
 			sudo dnf install -y neovim
@@ -138,10 +136,6 @@ installeditors() {
 			;;
 	esac
 	pip3 install pynvim --user --no-warn-script-location
-}
-
-installpip() {
-	pip3 install yt-dlp --user --no-warn-script-location
 }
 
 installcli() {
@@ -156,6 +150,8 @@ installcli() {
 			sudo pacman -Syu --noconfirm --needed $ARCHCLIPACK
 			;;
 	esac
+
+	pip3 install yt-dlp --user --no-warn-script-location
 }
 
 installgui() {
@@ -272,19 +268,6 @@ nix() {
 	nix-env -iA nixpkgs.ripgrep-all
 }
 
-notifyend() {
-	if [ -n "${GNOMEVER+x}" ]; then
-		gdbus call --session \
-			--dest=org.freedesktop.Notifications \
-			--object-path=/org/freedesktop/Notifications \
-			--method=org.freedesktop.Notifications.Notify \
-			"bootstrap" 0 "" "bootstrap" "Completed successfully." \
-			'[]' '{"urgency": <1>}' 5000
-	else
-		echo "Bootstrap completed successfully."
-	fi
-}
-
 dir=$(cd -- "$(dirname -- "$0")" && pwd)
 cd "$dir" || exit
 
@@ -310,4 +293,4 @@ fi
 gitconfig
 dotfiles
 stopsudo
-notifyend
+echo "Bootstrap completed successfully."
