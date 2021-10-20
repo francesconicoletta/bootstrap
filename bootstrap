@@ -241,22 +241,6 @@ installflatpaks() {
 	#flatpak override --user --env=QT_QPA_PLATFORM=xcb org.telegram.desktop
 }
 
-ohmyzsh() {
-	sudo chsh -s "$(command -v zsh)" "$USER"
-	rm -rf "$HOME/.oh-my-zsh"
-	export CHSH=no
-	export RUNZSH=no
-	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-	git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-}
-
-fonts() {
-	mkdir -p "$HOME/.local/share/fonts"
-	aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/SourceCodePro/Regular/complete/Sauce%20Code%20Pro%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
-	aria2c https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/UbuntuMono/Regular/complete/Ubuntu%20Mono%20Nerd%20Font%20Complete%20Mono.ttf -d "$HOME/.local/share/fonts"
-}
-
 dotfiles() {
 	if [ -d "$HOME/.dotfiles" ]; then
 		mv "$HOME/.dotfiles" "$HOME/.dotfiles-old"
@@ -339,8 +323,6 @@ if ! grep hypervisor < /proc/cpuinfo; then
 	enablefstrim
 	enableiosfastcharge
 	services
-	ohmyzsh
-	fonts
 	if ! [ "$OS" = "Arch Linux" ]; then
 		installflatpaks
 		nix
