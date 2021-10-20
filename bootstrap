@@ -123,11 +123,12 @@ gnomeconfig() {
 installeditors() {
 	case "$OS" in
 		Ubuntu | Debian )
-			NVIMPATH="$HOME/.local/bin/nvim"
+			NVIMPATH="$HOME/.local/bin/"
 			NVIMURL=$(curl -L -s https://api.github.com/repos/neovim/neovim/releases/latest | grep -o -E "https://(.*)neovim(.*)nvim.appimage" | head -1)
+			echo $NVIMURL
 			mkdir -p "$NVIMPATH"
-			curl -L -s "$NVIMURL" -o "$NVIMPATH"
-			chmod +x "$NVIMPATH"
+			curl -L -s "$NVIMURL" -o "$NVIMPATH/nvim"
+			chmod +x "$NVIMPATH/nvim"
 			;;
 		Fedora )
 			sudo dnf install -y neovim
@@ -267,7 +268,7 @@ nix() {
 	curl -L https://nixos.org/nix/install | sh -s
 	. "$HOME/.nix-profile/etc/profile.d/nix.sh"
 	nix-env -i sumneko-lua-language-server
-	nix-env -i nixpkgs.ripgrep-all
+	nix-env -iA nixpkgs.ripgrep-all
 }
 
 notifyend() {
