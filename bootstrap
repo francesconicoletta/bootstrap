@@ -44,79 +44,12 @@ getos() {
 	fi
 }
 
-gnomeconfig() {
-	case "$OS" in
-		Ubuntu | Debian )
-			dpkg -l gnome-shell
-			;;
-		Fedora )
-			rpm -q gnome-shell
-			;;
-		"Arch Linux" )
-			pacman -Qi gnome-shell
-			;;
-	esac
+desktopconfig() {
+	localectl set-x11-keymap us "" "" compose:ralt,caps:escape_shifted_capslock,terminate:ctrl_alt_bksp
 
-	if [ -z $? ]; then
-		GNOMEVER="$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1)"
-		echo "[/]
-		sources=[('xkb', 'us')]
-		xkb-options=['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']" | dconf load /org/gnome/desktop/input-sources/
-		echo "[/]
-		click-method='fingers'
-		tap-to-click=false
-		two-finger-scrolling-enabled=true" | dconf load /org/gnome/desktop/pheripherals/touchpad/
-		echo "[/]
-		close=['<Shift><Super>q']" | dconf load /org/gnome/desktop/wm/keybindings/
-		echo "[/]
-		button-layout='appmenu:minimize,maximize,close'
-		resize-with-right-button=true" | dconf load /org/gnome/desktop/wm/preferences/
-		echo "[/]
-		night-light-enabled=true
-		night-light-temperature=uint32 3981" | dconf load /org/gnome/settings-daemon/plugins/color/
-		echo "[/]
-		center-new-windows=true" | dconf load /org/gnome/mutter/
-		echo "[/]
-		default-zoom-level='small'
-		use-tree-view=true" | dconf load /org/gnome/nautilus/list-view/
-		echo "[/]
-		default-folder-viewer='list-view'
-		search-filter-time-type='last_modified'
-		search-view='list-view'
-		show-create-link=true
-		show-delete-permanently=true" | dconf load /org/gnome/nautilus/preferences/
-		echo "[/]
-		clock-show-date=true
-		clock-show-seconds=true
-		clock-show-weekday=true
-		enable-hot-corners=true
-		gtk-im-module='gtk-im-context-simple'
-		show-battery-percentage=true
-		text-scaling-factor=1.0" | dconf load /org/gnome/desktop/interface/
-		echo "[/]
-		show-extensions-notice=false" | dconf load /org/gnome/tweaks/
-		echo "[/]
-		sleep-inactive-ac-timeout=3600
-		sleep-inactive-ac-type='nothing'" | dconf load /org/gnome/settings-daemon/plugins/power/
-
-		gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
-
-		if [ "$GNOMEVER" -lt 40 ]; then
-			echo "[/]
-			terminal=['<Super>Return']" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
-		else
-			echo "[/]
-			custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
-
-			[custom-keybindings/custom0]
-			binding='<Super>Return'
-			command='gnome-terminal'
-			name='Terminal'" | dconf load /org/gnome/settings-daemon/plugins/media-keys/
-		fi
-
-		if [ "$OS" = "Ubuntu" ]; then
-			gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize-or-previews'
-		fi
+	if gnome-shell --version; then
+		gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us')]"
+		gsettings set org.gnome.desktop.input-sources xkb-options "['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']"
 	fi
 }
 
@@ -273,7 +206,7 @@ cd "$dir" || exit
 
 startsudo
 getos
-gnomeconfig
+desktopconfig
 packagesetup
 installcli
 installeditors
@@ -290,7 +223,6 @@ if ! grep hypervisor < /proc/cpuinfo; then
 	fi
 fi
 
+stopsudo
 gitconfig
 dotfiles
-stopsudo
-echo "Bootstrap completed successfully."
