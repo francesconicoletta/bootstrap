@@ -1,9 +1,9 @@
 #!/bin/sh
 
-FEDORACLIPACK="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils flatpak fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree unrar util-linux-user"
+FEDORACLIPACK="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user"
 FEDORAGUIPACK="chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv rhythmbox shotwell thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox"
 
-DEBCLIPACK="aria2 curl firewall-config firewalld flatpak fzf git htop mlocate newsboat podman python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget"
+DEBCLIPACK="aria2 curl firewall-config firewalld fzf git htop mlocate newsboat podman python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget"
 DEBGUIPACK="deja-dup gnome-tweaks mpv rhythmbox shotwell thunderbird timeshift transmission virt-manager xclip"
 
 ARCHCLIPACK="aria2 base-devel curl firewalld fzf git htop mlocate newsboat podman python-pip ranger ripgrep shellcheck sof-firmware stow tmux toolbox tree util-linux"
@@ -139,16 +139,6 @@ services() {
 	sudo usermod -aG kvm "$USER"
 }
 
-installflatpaks() {
-	sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-	flatpak update -y
-	flatpak install -y flathub com.spotify.Client
-	flatpak install -y flathub org.telegram.desktop
-	flatpak install -y flathub com.github.tchx84.Flatseal
-	#flatpak override --user --env=QT_QPA_PLATFORM=wayland org.telegram.desktop
-	#flatpak override --user --env=QT_QPA_PLATFORM=xcb org.telegram.desktop
-}
-
 dotfiles() {
 	if [ -d "$HOME/.dotfiles" ]; then
 		mv "$HOME/.dotfiles" "$HOME/.dotfiles-old"
@@ -192,15 +182,6 @@ gitconfig() {
 	git config --global user.name "Francesco Nicoletta Puzzillo"
 }
 
-nix() {
-	sudo mkdir -p -m 0755 /nix
-	sudo chown "$USER" /nix
-	curl -L https://nixos.org/nix/install | sh -s
-	. "$HOME/.nix-profile/etc/profile.d/nix.sh"
-	nix-env -i sumneko-lua-language-server
-	nix-env -iA nixpkgs.ripgrep-all
-}
-
 dir=$(cd -- "$(dirname -- "$0")" && pwd)
 cd "$dir" || exit
 
@@ -217,10 +198,6 @@ if ! grep hypervisor < /proc/cpuinfo; then
 	enablefstrim
 	enableiosfastcharge
 	services
-	if ! [ "$OS" = "Arch Linux" ]; then
-		installflatpaks
-		nix
-	fi
 fi
 
 stopsudo
