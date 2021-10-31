@@ -1,13 +1,13 @@
 #!/bin/sh
 
-FEDORACLIPACK="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user"
-FEDORAGUIPACK="chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv rhythmbox shotwell thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox"
+FEDORACLIPACK="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass"
+FEDORAGUIPACK="chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox"
 
-DEBCLIPACK="aria2 curl firewall-config firewalld fzf git htop mlocate newsboat podman python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget"
-DEBGUIPACK="deja-dup gnome-tweaks mpv rhythmbox shotwell thunderbird timeshift transmission virt-manager xclip"
+DEBCLIPACK="aria2 curl firewall-config firewalld fzf git htop mlocate newsboat podman python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget mutt pass"
+DEBGUIPACK="deja-dup gnome-tweaks mpv thunderbird timeshift transmission virt-manager xclip"
 
-ARCHCLIPACK="aria2 base-devel curl firewalld fzf git htop mlocate newsboat podman python-pip ranger ripgrep shellcheck sof-firmware stow tmux toolbox tree util-linux"
-ARCHGUIPACK="chromium deja-dup discord firefox gnome-tweaks mpv rhythmbox shotwell telegram-desktop thunderbird transmission-gtk virt-manager wl-clipboard"
+ARCHCLIPACK="aria2 base-devel curl firewalld fzf git htop mlocate newsboat podman python-pip ranger ripgrep shellcheck sof-firmware stow tmux toolbox tree util-linux mutt pass"
+ARCHGUIPACK="chromium deja-dup firefox gnome-tweaks mpv thunderbird transmission-gtk virt-manager wl-clipboard"
 
 startsudo() {
     sudo -v
@@ -61,7 +61,7 @@ installeditors() {
 			mkdir -p "$NVIMPATH"
 			curl -L -s "$NVIMURL" -o "$NVIMPATH/nvim" && chmod +x "$NVIMPATH/nvim"
 			;;
-		Fedora )
+		"Fedora Linux" )
 			sudo dnf install -y neovim
 			;;
 		"Arch Linux" )
@@ -76,7 +76,7 @@ installcli() {
 		Ubuntu | Debian )
 			sudo apt-get install -y $DEBCLIPACK
 			;;
-		Fedora )
+		"Fedora Linux" )
 			sudo dnf install -y $FEDORACLIPACK
 			;;
 		"Arch Linux" )
@@ -95,7 +95,7 @@ installgui() {
 		Debian )
 			sudo apt-get install -y $DEBGUIPACK firefox-esr
 			;;
-		Fedora )
+		"Fedora Linux" )
 			sudo dnf install -y $FEDORAGUIPACK
 			sudo dnf group install -y "Multimedia"
 			;;
@@ -111,7 +111,7 @@ packagesetup() {
 			export DEBIAN_FRONTEND=noninteractive
 			sudo apt-get update && sudo apt-get upgrade -y
 			;;
-		Fedora )
+		"Fedora Linux" )
 			sudo dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 			sudo dnf upgrade -y
 			;;
@@ -167,7 +167,7 @@ dotfiles() {
 			echo "source /usr/share/doc/fzf/examples/key-bindings.bash" | tee -a "$HOME/.bashrc"
 			echo "source /usr/share/doc/fzf/examples/completion.bash" | tee -a "$HOME/.bashrc"
 			;;
-		Fedora )
+		"Fedora Linux" )
 			echo "source /usr/share/fzf/shell/key-bindings.bash" | tee -a "$HOME/.bashrc"
 			;;
 		"Arch Linux" )
