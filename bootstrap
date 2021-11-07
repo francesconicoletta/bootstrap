@@ -177,11 +177,6 @@ dotfiles() {
 	esac
 }
 
-gitconfig() {
-	git config --global user.email "francesconicoletta@nomnp.com"
-	git config --global user.name "Francesco Nicoletta Puzzillo"
-}
-
 dir=$(cd -- "$(dirname -- "$0")" && pwd)
 cd "$dir" || exit
 
@@ -201,5 +196,4 @@ if ! grep hypervisor < /proc/cpuinfo; then
 fi
 
 stopsudo
-gitconfig
 dotfiles
