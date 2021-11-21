@@ -3,8 +3,8 @@
 FEDORACLIPACK="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass"
 FEDORAGUIPACK="chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox"
 
-DEBCLIPACK="aria2 curl firewall-config firewalld fzf git htop mlocate newsboat podman python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget mutt pass"
-DEBGUIPACK="deja-dup gnome-tweaks mpv thunderbird timeshift transmission virt-manager xclip"
+DEBCLIPACK="make aria2 curl fzf git htop mlocate newsboat python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget mutt pass"
+DEBGUIPACK="gufw gnome-tweaks mpv thunderbird transmission virt-manager"
 
 ARCHCLIPACK="aria2 base-devel curl firewalld fzf git htop mlocate newsboat podman python-pip ranger ripgrep shellcheck sof-firmware stow tmux toolbox tree util-linux mutt pass"
 ARCHGUIPACK="chromium deja-dup firefox gnome-tweaks mpv thunderbird transmission-gtk virt-manager wl-clipboard"
@@ -50,12 +50,15 @@ desktopconfig() {
 	if gnome-shell --version; then
 		gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us')]"
 		gsettings set org.gnome.desktop.input-sources xkb-options "['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']"
+		if [ "$OS" = "Ubuntu" ]; then
+			gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize-or-previews'
+		fi
 	fi
 }
 
 installeditors() {
 	case "$OS" in
-		Ubuntu | Debian )
+		Ubuntu | "Debian GNU/Linux" )
 			NVIMPATH="$HOME/.local/bin"
 			NVIMURL=$(curl -L -s https://api.github.com/repos/neovim/neovim/releases/latest | grep -o -E "https://(.*)neovim(.*)nvim.appimage" | head -1)
 			mkdir -p "$NVIMPATH"
@@ -73,7 +76,7 @@ installeditors() {
 
 installcli() {
 	case "$OS" in
-		Ubuntu | Debian )
+		Ubuntu | "Debian GNU/Linux" )
 			sudo apt-get install -y $DEBCLIPACK
 			;;
 		"Fedora Linux" )
@@ -92,7 +95,7 @@ installgui() {
 		Ubuntu )
 			sudo apt-get install -y $DEBGUIPACK firefox
 			;;
-		Debian )
+		"Debian GNU/Linux" )
 			sudo apt-get install -y $DEBGUIPACK firefox-esr
 			;;
 		"Fedora Linux" )
@@ -107,7 +110,15 @@ installgui() {
 
 packagesetup() {
 	case "$OS" in
-		Ubuntu | Debian )
+		Ubuntu )
+			export DEBIAN_FRONTEND=noninteractive
+			sudo apt-get update && sudo apt-get upgrade -y
+			sudo snap set system refresh.timer=sun,2:00-3:30
+			sudo snap set system refresh.metered=hold
+			sudo snap remove snap-store
+			sudo snap refresh
+			;;
+		"Debian GNU/Linux" )
 			export DEBIAN_FRONTEND=noninteractive
 			sudo apt-get update && sudo apt-get upgrade -y
 			;;
@@ -133,7 +144,11 @@ enableiosfastcharge() {
 }
 
 services() {
-	sudo systemctl enable --now firewalld
+	if [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian GNU/Linux" ]; then
+		sudo systemctl enable --now ufw
+	else
+		sudo systemctl enable --now firewalld
+	fi
 	sudo systemctl disable --now bluetooth
 	sudo usermod -aG libvirt "$USER"
 	sudo usermod -aG kvm "$USER"
@@ -163,7 +178,7 @@ dotfiles() {
 	mv "$HOME/.bashrc.copy" "$HOME/.bashrc"
 
 	case "$OS" in
-		Ubuntu | Debian )
+		Ubuntu | "Debian GNU/Linux" )
 			echo "source /usr/share/doc/fzf/examples/key-bindings.bash" | tee -a "$HOME/.bashrc"
 			echo "source /usr/share/doc/fzf/examples/completion.bash" | tee -a "$HOME/.bashrc"
 			;;
@@ -186,7 +201,6 @@ desktopconfig
 packagesetup
 installcli
 installeditors
-installpip
 
 if ! grep hypervisor < /proc/cpuinfo; then
 	installgui
