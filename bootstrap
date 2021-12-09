@@ -1,213 +1,35 @@
 #!/bin/sh
 
-FEDORACLIPACK="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass"
-FEDORAGUIPACK="chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox"
+packages="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass neovim chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox"
 
-DEBCLIPACK="make aria2 curl fzf git htop mlocate newsboat python3-pip ranger ripgrep stow tmux tmux-plugin-manager tmuxinator tree wget mutt pass"
-DEBGUIPACK="gufw gnome-tweaks mpv thunderbird transmission virt-manager"
+localectl set-x11-keymap us "" "" compose:ralt,caps:escape_shifted_capslock,terminate:ctrl_alt_bksp
+gsettings set org.gnome.desktop.wm.keybindings close ['<Shift><Super>q']
+gsettings set org.gnome.desktop.wm.preferences resize-with-right-button true
+gsettings set org.gnome.desktop.interface font-antialiasing 'rgba'
+gsettings set org.gnome.desktop.interface clock-show-seconds true
+gsettings set org.gnome.desktop.interface clock-show-date true
+gsettings set org.gnome.desktop.interface enable-hot-corners true
+gsettings set org.gnome.desktop.interface show-battery-percentage true
 
-ARCHCLIPACK="aria2 base-devel curl firewalld fzf git htop mlocate newsboat podman python-pip ranger ripgrep shellcheck sof-firmware stow tmux toolbox tree util-linux mutt pass"
-ARCHGUIPACK="chromium deja-dup firefox gnome-tweaks mpv thunderbird transmission-gtk virt-manager wl-clipboard"
+sudo sh -c '
+	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" &&
+	dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" &&
+	dnf upgrade -y &&
+	dnf install -y $packages "@Multimedia" &&
+	systemctl enable fstrim.timer &&
+	systemctl enable --now firewalld &&
+	systemctl disable --now bluetooth &&
+	usermod -aG libvirt "$0" &&
+	usermod -aG kvm "$0"' "$USER" || exit 1
 
-startsudo() {
-    sudo -v
-    ( while true; do sudo -v; sleep 50; done; ) &
-    SUDO_PID="$!"
-    trap stopsudo INT TERM
-}
+pip3 install yt-dlp --user --no-warn-script-location
 
-stopsudo() {
-    kill "$SUDO_PID"
-    trap - INT TERM
-    sudo -k
-}
-
-getos() {
-	if [ -f /etc/os-release ]; then
-		. /etc/os-release
-		OS=$NAME
-		VER=$VERSION_ID
-	elif type lsb_release >/dev/null 2>&1; then
-		OS=$(lsb_release -si)
-		VER=$(lsb_release -sr)
-	elif [ -f /etc/lsb-release ]; then
-		. /etc/lsb-release
-		OS=$DISTRIB_ID
-		VER=$DISTRIB_RELEASE
-	elif [ -f /usr/lib/os-release ]; then
-		. /usr/lib/os-release
-		OS=$NAME
-		VER=$VERSION_ID
-	else
-		OS=$(uname -s)
-		VER=$(uname -r)
-	fi
-}
-
-desktopconfig() {
-	localectl set-x11-keymap us "" "" compose:ralt,caps:escape_shifted_capslock,terminate:ctrl_alt_bksp
-
-	if gnome-shell --version; then
-		gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us')]"
-		gsettings set org.gnome.desktop.input-sources xkb-options "['compose:ralt', 'terminate:ctrl_alt_bksp', 'caps:escape_shifted_capslock']"
-		if [ "$OS" = "Ubuntu" ]; then
-			gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize-or-previews'
-		fi
-	fi
-}
-
-installeditors() {
-	case "$OS" in
-		Ubuntu | "Debian GNU/Linux" )
-			NVIMPATH="$HOME/.local/bin"
-			NVIMURL=$(curl -L -s https://api.github.com/repos/neovim/neovim/releases/latest | grep -o -E "https://(.*)neovim(.*)nvim.appimage" | head -1)
-			mkdir -p "$NVIMPATH"
-			curl -L -s "$NVIMURL" -o "$NVIMPATH/nvim" && chmod +x "$NVIMPATH/nvim"
-			;;
-		"Fedora Linux" )
-			sudo dnf install -y neovim
-			;;
-		"Arch Linux" )
-			sudo pacman -Syu --noconfirm --needed neovim
-			;;
-	esac
-	pip3 install pynvim --user --no-warn-script-location
-}
-
-installcli() {
-	case "$OS" in
-		Ubuntu | "Debian GNU/Linux" )
-			sudo apt-get install -y $DEBCLIPACK
-			;;
-		"Fedora Linux" )
-			sudo dnf install -y $FEDORACLIPACK
-			;;
-		"Arch Linux" )
-			sudo pacman -Syu --noconfirm --needed $ARCHCLIPACK
-			;;
-	esac
-
-	pip3 install yt-dlp --user --no-warn-script-location
-}
-
-installgui() {
-	case "$OS" in
-		Ubuntu )
-			sudo apt-get install -y $DEBGUIPACK firefox
-			;;
-		"Debian GNU/Linux" )
-			sudo apt-get install -y $DEBGUIPACK firefox-esr
-			;;
-		"Fedora Linux" )
-			sudo dnf install -y $FEDORAGUIPACK
-			sudo dnf group install -y "Multimedia"
-			;;
-		"Arch Linux" )
-			sudo pacman -Syu --noconfirm --needed $ARCHGUIPACK
-			;;
-	esac
-}
-
-packagesetup() {
-	case "$OS" in
-		Ubuntu )
-			export DEBIAN_FRONTEND=noninteractive
-			sudo apt-get update && sudo apt-get upgrade -y
-			sudo snap set system refresh.timer=sun,2:00-3:30
-			sudo snap set system refresh.metered=hold
-			sudo snap remove snap-store
-			sudo snap refresh
-			;;
-		"Debian GNU/Linux" )
-			export DEBIAN_FRONTEND=noninteractive
-			sudo apt-get update && sudo apt-get upgrade -y
-			;;
-		"Fedora Linux" )
-			sudo dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
-			sudo dnf upgrade -y
-			;;
-		"Arch Linux" )
-			sudo sed -i '/VerbosePkgLists/s/^#//g' /etc/pacman.conf
-			sudo sed -i '/Color/s/^#//g' /etc/pacman.conf
-			sudo sed -i '/ParallelDownloads/c\ParallelDownloads = 5' /etc/pacman.conf
-			sudo pacman -Syu --noconfirm
-			;;
-	esac
-}
-
-enablefstrim() {
-	sudo systemctl enable fstrim.timer
-}
-
-enableiosfastcharge() {
-	echo "SUBSYSTEM==\"usb\", ACTION==\"add\", ENV{ID_MODEL}==\"iPhone\", RUN+=\"/usr/bin/env sh -c 'echo Fast > /sys/class/power_supply/apple_mfi_fastcharge/charge_type'\"" | sudo tee /etc/udev/rules.d/99-ios-fastcharge.rules.j2
-}
-
-services() {
-	if [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian GNU/Linux" ]; then
-		sudo systemctl enable --now ufw
-	else
-		sudo systemctl enable --now firewalld
-	fi
-	sudo systemctl disable --now bluetooth
-	sudo usermod -aG libvirt "$USER"
-	sudo usermod -aG kvm "$USER"
-}
-
-dotfiles() {
-	if [ -d "$HOME/.dotfiles" ]; then
-		mv "$HOME/.dotfiles" "$HOME/.dotfiles-old"
-	fi
-
-	if [ -f "$HOME/.ssh/id_ed25519" ]; then
-		git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles"
-	else
-		printf "\nssh key not present.\n"
-		git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles"
-	fi
-
-	mv "$HOME/.bashrc" "$HOME/.bashrc.old"
-	cd "$HOME/.dotfiles" || exit
-	make stow
-
-	grep -v -e "source /usr/share/doc/fzf/examples/key-bindings.bash" \
-		-e "source /usr/share/doc/fzf/examples/completion.bash" \
-		-e "source /usr/share/fzf/shell/key-bindings.bash" \
-		-e "source /usr/share/fzf/key-bindings.bash" \
-		-e "source /usr/share/fzf/completion.bash" "$HOME/.bashrc" > "$HOME/.bashrc.copy"
-	mv "$HOME/.bashrc.copy" "$HOME/.bashrc"
-
-	case "$OS" in
-		Ubuntu | "Debian GNU/Linux" )
-			echo "source /usr/share/doc/fzf/examples/key-bindings.bash" | tee -a "$HOME/.bashrc"
-			echo "source /usr/share/doc/fzf/examples/completion.bash" | tee -a "$HOME/.bashrc"
-			;;
-		"Fedora Linux" )
-			echo "source /usr/share/fzf/shell/key-bindings.bash" | tee -a "$HOME/.bashrc"
-			;;
-		"Arch Linux" )
-			echo "source /usr/share/fzf/key-bindings.bash" | tee -a "$HOME/.bashrc"
-			echo "source /usr/share/fzf/completion.bash" | tee -a "$HOME/.bashrc"
-			;;
-	esac
-}
-
-dir=$(cd -- "$(dirname -- "$0")" && pwd)
-cd "$dir" || exit
-
-startsudo
-getos
-desktopconfig
-packagesetup
-installcli
-installeditors
-
-if ! grep hypervisor < /proc/cpuinfo; then
-	installgui
-	enablefstrim
-	enableiosfastcharge
-	services
+if [ -d "$HOME/.dotfiles" ]; then
+	mv "$HOME/.dotfiles" "$HOME/.dotfiles-old"
 fi
 
-stopsudo
-dotfiles
+git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles" ||
+git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles" || exit 1
+
+cd "$HOME/.dotfiles" || exit 1
+make stow
