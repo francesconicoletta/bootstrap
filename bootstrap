@@ -1,9 +1,6 @@
 #!/bin/sh
 
-packages="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass neovim chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox"
-
 localectl set-x11-keymap us "" "" compose:ralt,caps:escape_shifted_capslock,terminate:ctrl_alt_bksp
-gsettings set org.gnome.desktop.wm.keybindings close ['<Shift><Super>q']
 gsettings set org.gnome.desktop.wm.preferences resize-with-right-button true
 gsettings set org.gnome.desktop.interface font-antialiasing 'rgba'
 gsettings set org.gnome.desktop.interface clock-show-seconds true
@@ -12,10 +9,11 @@ gsettings set org.gnome.desktop.interface enable-hot-corners true
 gsettings set org.gnome.desktop.interface show-battery-percentage true
 
 sudo sh -c '
-	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" &&
-	dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" &&
+	packages="ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass neovim chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox foliate"
+	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" &&
 	dnf upgrade -y &&
-	dnf install -y $packages "@Multimedia" &&
+	dnf install -y $packages &&
+	dnf install -y "@Multimedia" &&
 	systemctl enable fstrim.timer &&
 	systemctl enable --now firewalld &&
 	systemctl disable --now bluetooth &&
@@ -32,4 +30,4 @@ git clone git@github.com:francesconicoletta/dotfiles.git "$HOME/.dotfiles" ||
 git clone https://github.com/francesconicoletta/dotfiles.git "$HOME/.dotfiles" || exit 1
 
 cd "$HOME/.dotfiles" || exit 1
-make stow
+rm "$HOME/.bashrc" && make stow
