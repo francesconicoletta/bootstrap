@@ -11,7 +11,7 @@ gsettings set org.gnome.desktop.interface enable-hot-corners true
 gsettings set org.gnome.desktop.interface show-battery-percentage true
 
 sudo sh -c '
-	packages="zsh ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass neovim chromium deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox foliate yt-dlp distrobox mozilla-noscript mozilla-ublock-origin"
+	packages="zsh perl-Digest-SHA ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop mlocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass vim-enhanced deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox foliate yt-dlp distrobox mozilla-noscript mozilla-ublock-origin"
 	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" &&
 	dnf upgrade -y &&
 	dnf install -y $packages &&
@@ -26,8 +26,13 @@ sudo sh -c '
 if [ -d "$DOTFILES_DIR" ]; then
 	mkdir -p "$(basename $DOTFILES_DIR)" && mv "$DOTFILES_DIR" "$(basedir $DOTFILES_DIR)/dotfiles-old"
 fi
-
 git clone git@github.com:francesconicoletta/dotfiles.git "$DOTFILES_DIR"
-
 cd "$DOTFILES_DIR" || exit 1
 make stow
+
+mkdir -p "$HOME/.local/bin"
+rm -f "$HOME/.local/bin/nvim"
+curl --location https://github.com/neovim/neovim/releases/download/stable/nvim.appimage > "$HOME/.local/bin/nvim"
+if [ "$(shasum -a 256 "$HOME/.local/bin/nvim" | cut -d' ' -f1)" = "$(curl --location https://github.com/neovim/neovim/releases/download/stable/nvim.appimage.sha256sum | cut -d' ' -f1)" ]; then
+	chmod u+x "$HOME/.local/bin/nvim"
+fi
