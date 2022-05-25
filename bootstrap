@@ -11,7 +11,7 @@ gsettings set org.gnome.desktop.interface enable-hot-corners true
 gsettings set org.gnome.desktop.interface show-battery-percentage true
 
 sudo sh -c '
-	packages="zsh perl-Digest-SHA ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop plocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass vim-enhanced deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-shell-extension-gpaste gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox foliate yt-dlp distrobox mozilla-noscript mozilla-ublock-origin"
+	packages="zsh perl-Digest-SHA ShellCheck aria2 curl dnf-plugin-tracer dnf-utils fzf git htop plocate newsboat podman python3-pip ranger ripgrep selinux-policy-sandbox stow tmux toolbox tree util-linux-user mutt pass vim-enhanced deja-dup firefox gnome-extensions-app gnome-shell-extension-appindicator gnome-shell-extension-gpaste gnome-tweaks mpv thunderbird transmission virt-manager wl-clipboard firewall-config policycoreutils-sandbox foliate yt-dlp distrobox mozilla-noscript mozilla-ublock-origin easyeffects"
 	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" &&
 	dnf upgrade -y &&
 	dnf install -y $packages &&
